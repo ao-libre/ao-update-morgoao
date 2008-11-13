@@ -2,32 +2,24 @@ VERSION 5.00
 Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.ocx"
 Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.ocx"
 Begin VB.Form frmDownload 
-   BorderStyle     =   3  'Fixed Dialog
+   BorderStyle     =   0  'None
    Caption         =   "AoUpdate Downloader"
-   ClientHeight    =   3240
-   ClientLeft      =   45
-   ClientTop       =   435
+   ClientHeight    =   1560
+   ClientLeft      =   0
+   ClientTop       =   0
    ClientWidth     =   8940
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   ScaleHeight     =   3240
+   ScaleHeight     =   1560
    ScaleWidth      =   8940
    ShowInTaskbar   =   0   'False
    StartUpPosition =   1  'CenterOwner
-   Begin VB.CommandButton cmdCancel 
-      Caption         =   "Cancelar"
-      Height          =   375
-      Left            =   5783
-      TabIndex        =   5
-      Top             =   2513
-      Width           =   2415
-   End
    Begin MSComctlLib.ProgressBar pbDownload 
       Height          =   375
-      Left            =   743
+      Left            =   840
       TabIndex        =   0
-      Top             =   1913
+      Top             =   923
       Width           =   7455
       _ExtentX        =   13150
       _ExtentY        =   661
@@ -41,34 +33,19 @@ Begin VB.Form frmDownload
       _ExtentY        =   1005
       _Version        =   393216
    End
-   Begin VB.Label lblSavePath 
-      Height          =   495
-      Left            =   2550
-      TabIndex        =   4
-      Top             =   1193
-      Width           =   5655
-   End
-   Begin VB.Label Label2 
-      Caption         =   "Guardando Archivo en: "
-      Height          =   255
-      Left            =   743
-      TabIndex        =   3
-      Top             =   1193
-      Width           =   1695
-   End
    Begin VB.Label lblDownloadPath 
       Height          =   495
-      Left            =   2543
+      Left            =   2539
       TabIndex        =   2
-      Top             =   353
+      Top             =   263
       Width           =   5655
    End
    Begin VB.Label Label1 
       Caption         =   "Descargando Archivo: "
       Height          =   255
-      Left            =   743
+      Left            =   739
       TabIndex        =   1
-      Top             =   353
+      Top             =   263
       Width           =   1695
    End
 End
@@ -97,8 +74,7 @@ Public Sub DownloadFile(sUrl As String)
         End With
         fileName = ReturnFileOrFolder(sUrl, True, True)
         
-        lblDownloadPath = sUrl
-        lblSavePath = filePath & fileName
+        lblDownloadPath.Caption = fileName
     Else
         'Si estamos bajando algo lo agregamos a la cola de descargas
         DownloadQueue.Add sUrl

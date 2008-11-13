@@ -11,9 +11,9 @@ Attribute VB_Name = "General"
 
 Option Explicit
 
-Public Const Updates_Site As String = "http://argentum.game-host.org/Argentum/"
-Public Const AoUpdate_File As String = "AoUpdate.ini"
-Public Downloads_Path As String
+Public Const UPDATES_SITE As String = "http://argentum.game-host.org/Argentum/"
+Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
+Public DownloadsPath As String
 
 Public Type tAoUpdateFile
     name As String
@@ -139,7 +139,7 @@ Dim i As Long
         If remoteUpdateFile(DownloadQueue(i)).HasPatches Then
         
         Else
-            Call frmDownload.DownloadFile(Updates_Site & remoteUpdateFile(DownloadQueue(i)).name)
+            Call frmDownload.DownloadFile(UPDATES_SITE & remoteUpdateFile(DownloadQueue(i)).name)
         End If
         frmDownload.Show
         DoEvents
@@ -149,35 +149,18 @@ error:
     MsgBox Err.Description, vbCritical, Err.Number
 End Sub
 
-
-Public Sub Main()
-    Downloads_Path = App.Path & "\TEMP\"
-    frmDownload.filePath = Downloads_Path
-
-    'frmMain.Show
-    Dim AoUpdateLocal() As tAoUpdateFile
-    Dim AoUpdateRemote() As tAoUpdateFile
-    Dim i As Long
+Sub checkAoUpdateIntegrity()
     Dim nF As Integer
-    Dim DownloadQueue() As Byte
     
     'Look if exists the TEMP folder, if not, create it.
-    If Dir(Downloads_Path, vbDirectory) = vbNullString Then
-        MkDir Downloads_Path
+    If Dir(DownloadsPath, vbDirectory) = vbNullString Then
+        MkDir DownloadsPath
     End If
     
-    'Download the remote AoUpdate.ini to the TEMP folder
-    Call frmDownload.DownloadFile(Updates_Site & AoUpdate_File)
-    Debug.Print "Downloading AoUpdate_File"
-    While frmDownload.Downloading = True
-        DoEvents
-    Wend
-    Debug.Print "AoUpdate_File Complete!"
-        
     'Do we have a local AoUpdateFile ? If not, create it.
-    If Dir(App.Path & "\" & AoUpdate_File) = vbNullString Then
+    If Dir(App.Path & "\" & AOUPDATE_FILE) = vbNullString Then
         nF = FreeFile
-        Open App.Path & "\" & AoUpdate_File For Output As #nF
+        Open App.Path & "\" & AOUPDATE_FILE For Output As #nF
             Print #nF, "# Este archivo contiene las direcciones de los archivos del cliente, con sus respectivas versiones y sus respectivos md5"
             Print #nF, "[INIT]"
             Print #nF, "NumFiles=1"
@@ -187,9 +170,33 @@ Public Sub Main()
             Print #nF, "MD5="
         Close #nF
     End If
-    AoUpdateLocal = ReadAoUFile(App.Path & "\" & "AoUpdate.ini") 'Load the local file
-    AoUpdateRemote = ReadAoUFile(Downloads_Path & "AoUpdate.ini") 'Load the Remote file
+End Sub
 
+
+Public Sub Main()
+    DownloadsPath = App.Path & "\TEMP\"
+    frmDownload.filePath = DownloadsPath
+
+    'frmMain.Show
+    Dim AoUpdateLocal() As tAoUpdateFile
+    Dim AoUpdateRemote() As tAoUpdateFile
+    Dim i As Long
+    Dim DownloadQueue() As Byte
+    
+    
+    checkAoUpdateIntegrity
+    Debug.Print "Checking AoUpdate integrity..."
+    
+    'Download the remote AoUpdate.ini to the TEMP folder
+    Call frmDownload.DownloadFile(UPDATES_SITE & AOUPDATE_FILE)
+    While frmDownload.Downloading = True
+        DoEvents
+    Wend
+
+    AoUpdateLocal = ReadAoUFile(App.Path & "\" & "AoUpdate.ini") 'Load the local file
+    AoUpdateRemote = ReadAoUFile(DownloadsPath & "AoUpdate.ini") 'Load the Remote file
+
+    
     DownloadQueue = compareUpdateFiles(AoUpdateLocal, AoUpdateRemote) 'Compare local vs remote.
     
     If UBound(DownloadQueue) > 1 Then
