@@ -11,7 +11,7 @@ Attribute VB_Name = "General"
 
 Option Explicit
 
-Public Const UPDATES_SITE As String = "http://argentum.game-host.org/Argentum/"
+Public Const UPDATES_SITE As String = "http://www.argentuuum.com.ar/aoupdate/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
 Public DownloadsPath As String
 
@@ -139,9 +139,14 @@ Dim i As Long
         If remoteUpdateFile(DownloadQueue(i)).HasPatches Then
         
         Else
+            frmDownload.Show
+            
             Call frmDownload.DownloadFile(UPDATES_SITE & remoteUpdateFile(DownloadQueue(i)).name)
+            
+            While frmDownload.Downloading = True
+                DoEvents
+            Wend
         End If
-        frmDownload.Show
         DoEvents
     Next
 Exit Sub
@@ -205,4 +210,6 @@ Public Sub Main()
         'Check MD5 integrity. If wrong, redo queue, only do this once. For everyFile that went right, remake LocalAoUpdateFile
     Else
     End If
+    
+    MsgBox "Acabé!"
 End Sub
