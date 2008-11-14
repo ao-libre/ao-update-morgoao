@@ -22,7 +22,17 @@ Public Type tAoUpdateFile
     Path As String
     HasPatches As Boolean
     Comment As String
+    DownloadError As Boolean
 End Type
+
+Public AoUpdateFileDownloaded As Boolean
+
+Public AoUpdateRemote() As tAoUpdateFile
+Public AoUpdateLocal() As tAoUpdateFile
+Public DownloadQueue() As Byte
+
+'Cola de archivos a decargar
+Public ColDownloadQueue As New Collection
 
 ''
 ' Loads the AoUpdate Ini File to an struct array
@@ -125,7 +135,7 @@ End Function
 '
 ' @param DownloadQueue Specifies reference to UpdateQueue
 ' @param remoteUpdateFile Specifies reference to Remote Update File
-Public Sub DownloadUpdates(DownloadQueue() As Byte, remoteUpdateFile() As tAoUpdateFile)
+Public Sub DownloadUpdates(DownloadQueue() As Byte)
 '*************************************************
 'Author: Marco Vanotti (MarKoxX)
 'Last modified: 27/10/2008
@@ -136,18 +146,14 @@ Dim i As Long
 'On Error GoTo error
 
     For i = 1 To UBound(DownloadQueue)
-        If remoteUpdateFile(DownloadQueue(i)).HasPatches Then
-        
+        If AoUpdateRemote(DownloadQueue(i)).HasPatches Then
+            
         Else
             frmDownload.Show
             
-            Call frmDownload.DownloadFile(UPDATES_SITE & remoteUpdateFile(DownloadQueue(i)).name)
-            
-            While frmDownload.Downloading = True
-                DoEvents
-            Wend
+            ColDownloadQueue.Add DownloadQueue(i)
+            Call frmDownload.DownloadFile(DownloadQueue(i))
         End If
-        DoEvents
     Next
 Exit Sub
 error:
@@ -177,27 +183,27 @@ Sub checkAoUpdateIntegrity()
     End If
 End Sub
 
-
 Public Sub Main()
+    
     DownloadsPath = App.Path & "\TEMP\"
     frmDownload.filePath = DownloadsPath
-
-    'frmMain.Show
-    Dim AoUpdateLocal() As tAoUpdateFile
-    Dim AoUpdateRemote() As tAoUpdateFile
+    
     Dim i As Long
-    Dim DownloadQueue() As Byte
     
     
     checkAoUpdateIntegrity
-    Debug.Print "Checking AoUpdate integrity..."
+    'Debug.Print "Checking AoUpdate integrity..."
     
     'Download the remote AoUpdate.ini to the TEMP folder
-    Call frmDownload.DownloadFile(UPDATES_SITE & AOUPDATE_FILE)
+    ColDownloadQueue.Add 0
+    Call frmDownload.DownloadFile(0, UPDATES_SITE & AOUPDATE_FILE)
+    
     While frmDownload.Downloading = True
         DoEvents
     Wend
-
+    
+    AoUpdateFileDownloaded = True
+    
     AoUpdateLocal = ReadAoUFile(App.Path & "\" & "AoUpdate.ini") 'Load the local file
     AoUpdateRemote = ReadAoUFile(DownloadsPath & "AoUpdate.ini") 'Load the Remote file
 
@@ -205,11 +211,9 @@ Public Sub Main()
     DownloadQueue = compareUpdateFiles(AoUpdateLocal, AoUpdateRemote) 'Compare local vs remote.
     
     If UBound(DownloadQueue) > 1 Then
-        Call DownloadUpdates(DownloadQueue, AoUpdateRemote)
+        Call DownloadUpdates(DownloadQueue)
         'Patch 'em!
         'Check MD5 integrity. If wrong, redo queue, only do this once. For everyFile that went right, remake LocalAoUpdateFile
     Else
     End If
-    
-    MsgBox "Acabé!"
 End Sub
