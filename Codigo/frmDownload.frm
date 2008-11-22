@@ -97,7 +97,7 @@ Private Sub iDownload_StateChanged(ByVal State As Integer)
     Dim fileSize As Long
     Dim downloaded As Long
     
-'On Error GoTo error
+On Error GoTo error
     nF = -1
     
     Select Case State

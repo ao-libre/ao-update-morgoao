@@ -47,7 +47,7 @@ Public Function ReadAoUFile(ByVal file As String) As tAoUpdateFile()
     Dim tmpAoUFile() As tAoUpdateFile
     Dim i As Integer
     
-'On Error GoTo error
+On Error GoTo error
     
     Call Leer.Initialize(file)
     
@@ -91,6 +91,7 @@ Public Sub CompareUpdateFiles(ByRef localUpdateFile() As tAoUpdateFile, ByRef re
     Dim j As Long
     Dim tmpArrIndex As Long
     
+' TODO : Check what happens if no files are to be downloaded....
     'ReDim DownloadQueue(0) As Long
     tmpArrIndex = -1
     
@@ -140,10 +141,10 @@ Public Sub NextDownload()
 'Last modified: 27/10/2008
 '
 '*************************************************
-'On Error GoTo error
+On Error GoTo error
     
     If DownloadQueueIndex > UBound(DownloadQueue) Then
-' TODO : TERMINAMOS!!
+        
         ' Override local config file with remote one
         Call Kill(App.Path & "\" & AOUPDATE_FILE)
         Name DownloadsPath & "\" & AOUPDATE_FILE As App.Path & "\" & AOUPDATE_FILE
@@ -155,8 +156,8 @@ Public Sub NextDownload()
                 If .HasPatches Then
 ' TODO : Patch files!
                 Else
-                    If Dir$(App.Path & "\" & .name) <> vbNullString Then
-                        Call Kill(App.Path & "\" & .name)
+                    If Dir$(App.Path & "\" & .Path & "\" & .name) <> vbNullString Then
+                        Call Kill(App.Path & "\" & .Path & "\" & .name)
                     End If
                     
                     Name DownloadsPath & "\" & .name As App.Path & "\" & .Path & "\" & .name
@@ -168,7 +169,7 @@ Public Sub NextDownload()
         End
     Else
         If AoUpdateRemote(DownloadQueue(DownloadQueueIndex)).HasPatches Then
-'TODO : Download and apply patches individually
+'TODO : Download patches individually!
         Else
             'Downlaod file. Map local paths to urls.
             Call frmDownload.DownloadFile(Replace("\", AoUpdateRemote(DownloadQueue(DownloadQueueIndex)).Path, "/") & AoUpdateRemote(DownloadQueue(DownloadQueueIndex)).name)
@@ -213,6 +214,7 @@ Public Sub ConfgFileDownloaded()
     
     Call CompareUpdateFiles(AoUpdateLocal, AoUpdateRemote) 'Compare local vs remote.
     
+    'Start downloads!
     Call NextDownload
 End Sub
 
