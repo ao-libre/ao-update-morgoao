@@ -45,13 +45,12 @@ Public Function ReadAoUFile(file As String) As tAoUpdateFile()
 'Last modified: 27/10/2008
 '
 '*************************************************
-
     Dim Leer As New clsIniReader
     Dim NumFiles As Integer
     Dim tmpAoUFile() As tAoUpdateFile
     Dim i As Integer
     
- '   On Error GoTo error
+'On Error GoTo error
     
     Call Leer.Initialize(file)
     
@@ -66,13 +65,13 @@ Public Function ReadAoUFile(file As String) As tAoUpdateFile()
         If Leer.KeyExists("Path") Then tmpAoUFile(i).Path = Leer.GetValue("File" & i, "Path")
         If Leer.KeyExists("HasPatches") Then tmpAoUFile(i).HasPatches = CBool(Leer.GetValue("File" & i, "HasPatches"))
         If Leer.KeyExists("Comment") Then tmpAoUFile(i).Comment = Leer.GetValue("File" & i, "Comment")
-    Next
+    Next i
     
     ReadAoUFile = tmpAoUFile
     
     Set Leer = Nothing
-    
 Exit Function
+
 error:
     MsgBox Err.Description, vbCritical, Err.Number
     Set Leer = Nothing
@@ -125,7 +124,7 @@ Public Function compareUpdateFiles(localUpdateFile() As tAoUpdateFile, remoteUpd
             ReDim Preserve tmpArr(UBound(tmpArr) + 1)
             tmpArr(UBound(tmpArr)) = i
         End If
-    Next
+    Next i
     
     compareUpdateFiles = tmpArr
 End Function
@@ -141,8 +140,8 @@ Public Sub DownloadUpdates(DownloadQueue() As Byte)
 'Last modified: 27/10/2008
 '
 '*************************************************
-Dim i As Long
-
+    Dim i As Long
+    
 'On Error GoTo error
 
     For i = 1 To UBound(DownloadQueue)
@@ -154,8 +153,9 @@ Dim i As Long
             ColDownloadQueue.Add DownloadQueue(i)
             Call frmDownload.DownloadFile(DownloadQueue(i))
         End If
-    Next
+    Next i
 Exit Sub
+
 error:
     MsgBox Err.Description, vbCritical, Err.Number
 End Sub
@@ -184,7 +184,6 @@ Sub checkAoUpdateIntegrity()
 End Sub
 
 Public Sub Main()
-    
     DownloadsPath = App.Path & "\TEMP\"
     frmDownload.filePath = DownloadsPath
     
