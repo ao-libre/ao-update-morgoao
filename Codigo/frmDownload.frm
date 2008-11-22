@@ -1,6 +1,6 @@
 VERSION 5.00
-Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.OCX"
-Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
+Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.ocx"
+Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "Mscomctl.ocx"
 Begin VB.Form frmDownload 
    BorderStyle     =   0  'None
    Caption         =   "AoUpdate Downloader"
@@ -57,30 +57,34 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Public CurrentDownload As Byte
-Public Downloading As Boolean
-Private fileName As String
 Public filePath As String
 
-Public Sub DownloadFile(ByVal Index As Long, Optional ByRef sIniUrl As String)
+Private Downloading As Boolean
+Private fileName As String
+
+Private downloadingConfig As Boolean
+
+Public Sub DownloadConfigFile()
+    downloadingConfig = True
+    
+    Call DownloadFile(AOUPDATE_FILE)
+End Sub
+
+Public Sub DownloadFile(ByVal file As String)
     Dim sURL As String
     
-    'Si se pasó el parámetro optional, es la ruta del INI
-    If LenB(sIniUrl) > 0 Then
-        sURL = sIniUrl
-    Else
-        sURL = UPDATES_SITE & AoUpdateRemote(Index).name
-    End If
+    sURL = UPDATES_SITE & file
     
     If Not Downloading Then
         Downloading = True
+        
         With iDownload
             .AccessType = icUseDefault
-            'Indicamos el url del archivo
-            .URL = sURL
             
             'Indicamos que vamos a descargar o recuperar un archivo desde una url
-            .Execute , "GET"
+            Call .Execute(sURL, "GET")
         End With
+        
         fileName = ReturnFileOrFolder(sURL, True, True)
         
         lblDownloadPath.Caption = fileName
@@ -91,95 +95,69 @@ Private Sub iDownload_StateChanged(ByVal State As Integer)
     Dim nF As Integer
     Dim tmpArr() As Byte
     Dim fileSize As Long
-    Dim dDone As Boolean
-    Dim dData
+    Dim downloaded As Long
     
-  '  On Error GoTo error
+'On Error GoTo error
+    nF = -1
     
     Select Case State
         Case icResponseCompleted
-            dDone = False
-            Downloading = True
             fileSize = iDownload.GetHeader("Content-Length")
-            
+            downloaded = 0
             
             pbDownload.max = fileSize
-            pbDownload.value = 0
+            pbDownload.value = downloaded
             
             'Create the file.
-            nF = FreeFile
+            nF = FreeFile()
             
-            Open filePath & fileName For Binary As #nF
-                While Not dDone
-                    dData = iDownload.GetChunk("1024", icByteArray)
+            Open filePath & fileName For Binary As nF
+                While fileSize <> downloaded
+                    tmpArr = iDownload.GetChunk(1024, icByteArray)
                     
-                    If Len(dData) = 0 Then dDone = True
+                    Put nF, , tmpArr
                     
-                    tmpArr = dData
+                    downloaded = downloaded + UBound(tmpArr) + 1
+                    pbDownload.value = downloaded
                     
-                    Put #nF, , tmpArr
-                    
-                    pbDownload.value = pbDownload.value + (Len(dData) * 2)
                     DoEvents
                 Wend
-            Close #nF
+            Close nF
             
-            pbDownload.value = 0
-            Downloading = False
+            'Reset nF
+            nF = -1
             
-            'Check the MD5 file
-            CheckMD5File
+            Call DownloadComplete
     End Select
-    
-    Exit Sub
+Exit Sub
+
 error:
-    MsgBox Err.Description, vbCritical, Err.Number
-    On Error Resume Next
+    Call MsgBox(Err.Description, vbCritical, Err.Number)
+    
+On Error Resume Next
+    If nF <> -1 Then
+        Close nF
+    End If
+    
     iDownload.Cancel
     pbDownload.value = 0
 End Sub
 
-Private Sub CheckMD5File()
-    If AoUpdateFileDownloaded = False Then
-        ColDownloadQueue.Remove (1)
-        Unload Me
-        Exit Sub
-    End If
+Private Sub DownloadComplete()
+    Downloading = False
     
-    If AoUpdateRemote(ColDownloadQueue.Item(1)).MD5 <> MD5File(DownloadsPath & AoUpdateRemote(ColDownloadQueue.Item(1)).name) Then
-        If AoUpdateRemote(ColDownloadQueue.Item(1)).DownloadError = True Then
-            'DOS ERRORES, QUÉ HAGO?
-            'Cola de archivos de errores?
-            Debug.Print "Dos errores en " & AoUpdateRemote(ColDownloadQueue.Item(1)).name
-            'Elimino el erroneo y sigo con el siguiente
-            ColDownloadQueue.Remove (1)
-            NextDownload
-        Else
-            'Lo pongo como erroneo y vuelvo a descargar
-            AoUpdateRemote(ColDownloadQueue.Item(1)).DownloadError = True
-            Call DownloadFile(ColDownloadQueue.Item(1))
-        End If
+    If downloadingConfig Then
+        downloadingConfig = False
+        
+        Call ConfgFileDownloaded
     Else
-        'Es correcto, lo remuevo y descargo el siguiente
-        ColDownloadQueue.Remove (1)
-        'Start next Download
-        NextDownload
-    End If
-End Sub
-    
-Private Sub NextDownload()
-    'Si hay cola sigo descargando sino finalizé correctamente el Update
-    If ColDownloadQueue.Count > 0 Then
-        Call DownloadFile(ColDownloadQueue.Item(1))
-    Else
-        MsgBox "Acabé!"
-        Unload Me
+        Call NextDownload
     End If
 End Sub
 
-Public Function ReturnFileOrFolder(FullPath As String, _
-                                   ReturnFile As Boolean, _
-                                   Optional IsURL As Boolean = False) _
+Public Function ReturnFileOrFolder(ByVal FullPath As String, _
+                                   ByVal ReturnFile As Boolean, _
+                                   Optional ByVal IsURL As Boolean = False) _
                                    As String
 '*************************************************
 'Author: Jeff Cockayne
@@ -198,13 +176,10 @@ Public Function ReturnFileOrFolder(FullPath As String, _
 '
 ' Returns:  String:     the filename or path
 '
-
-Dim intDelimiterIndex As Integer
-
-intDelimiterIndex = InStrRev(FullPath, IIf(IsURL, "/", "\"))
-ReturnFileOrFolder = IIf(ReturnFile, _
-                         Right(FullPath, Len(FullPath) - intDelimiterIndex), _
-                         Left(FullPath, intDelimiterIndex))
-
+    Dim intDelimiterIndex As Integer
+    
+    intDelimiterIndex = InStrRev(FullPath, IIf(IsURL, "/", "\"))
+    ReturnFileOrFolder = IIf(ReturnFile, _
+                             Right$(FullPath, Len(FullPath) - intDelimiterIndex), _
+                             Left$(FullPath, intDelimiterIndex))
 End Function
-

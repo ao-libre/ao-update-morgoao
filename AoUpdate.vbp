@@ -1,5 +1,4 @@
 Type=Exe
-Form=Codigo\Main.frm
 Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\WINDOWS\system32\stdole2.tlb#OLE Automation
 Class=clsIniReader; Codigo\clsIniReader.cls
 Module=General; Codigo\General.bas
@@ -7,7 +6,6 @@ Module=mod_MD5; Codigo\mod_MD5.bas
 Object={48E59290-9880-11CF-9754-00AA00C00908}#1.0#0; MSINET.ocx
 Object={831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0; Mscomctl.ocx
 Form=Codigo\frmDownload.frm
-IconForm="frmMain"
 Startup="Sub Main"
 HelpFile=""
 ExeName32="AoUpdate.exe"

@@ -13,33 +13,30 @@ Option Explicit
 
 Public Const UPDATES_SITE As String = "http://www.argentuuum.com.ar/aoupdate/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
-Public DownloadsPath As String
 
 Public Type tAoUpdateFile
-    name As String
-    Version As Integer
-    MD5 As String * 32
-    Path As String
-    HasPatches As Boolean
-    Comment As String
-    DownloadError As Boolean
+    name As String              'File name
+    Version As Integer          'The version of the file
+    MD5 As String * 32          'It's checksum
+    Path As String              'Path in the client to the file from App.Path (the server path is the same, changing '\' with '/')
+    HasPatches As Boolean       'Weather if patches are available for this file or not (if not the complete file has to be downloaded)
+    Comment As String           'Any comments regarding this file.
 End Type
 
-Public AoUpdateFileDownloaded As Boolean
+Public DownloadsPath As String
 
 Public AoUpdateRemote() As tAoUpdateFile
 Public AoUpdateLocal() As tAoUpdateFile
-Public DownloadQueue() As Byte
-
-'Cola de archivos a decargar
-Public ColDownloadQueue As New Collection
+Public DownloadQueue() As Long
+Public DownloadQueueIndex As Long
 
 ''
 ' Loads the AoUpdate Ini File to an struct array
 '
 ' @param file Specifies reference to AoUpdateIniFile
 ' @return an array of tAoUpdate
-Public Function ReadAoUFile(file As String) As tAoUpdateFile()
+
+Public Function ReadAoUFile(ByVal file As String) As tAoUpdateFile()
 '*************************************************
 'Author: Marco Vanotti (MarKoxX)
 'Last modified: 27/10/2008
@@ -56,15 +53,16 @@ Public Function ReadAoUFile(file As String) As tAoUpdateFile()
     
     NumFiles = Leer.GetValue("INIT", "NumFiles")
     
-    ReDim tmpAoUFile(1 To NumFiles) As tAoUpdateFile
+    ReDim tmpAoUFile(NumFiles - 1) As tAoUpdateFile
     
     For i = 1 To NumFiles
-        tmpAoUFile(i).name = Leer.GetValue("File" & i, "Name")
-        tmpAoUFile(i).Version = Leer.GetValue("File" & i, "Version")
-        tmpAoUFile(i).MD5 = Leer.GetValue("File" & i, "MD5")
-        If Leer.KeyExists("Path") Then tmpAoUFile(i).Path = Leer.GetValue("File" & i, "Path")
-        If Leer.KeyExists("HasPatches") Then tmpAoUFile(i).HasPatches = CBool(Leer.GetValue("File" & i, "HasPatches"))
-        If Leer.KeyExists("Comment") Then tmpAoUFile(i).Comment = Leer.GetValue("File" & i, "Comment")
+        tmpAoUFile(i - 1).name = Leer.GetValue("File" & i, "Name")
+        tmpAoUFile(i - 1).Version = CInt(Leer.GetValue("File" & i, "Version"))
+        tmpAoUFile(i - 1).MD5 = Leer.GetValue("File" & i, "MD5")
+        tmpAoUFile(i - 1).Path = Leer.GetValue("File" & i, "Path")
+        
+        If Leer.KeyExists("HasPatches") Then tmpAoUFile(i - 1).HasPatches = CBool(Leer.GetValue("File" & i, "HasPatches"))
+        If Leer.KeyExists("Comment") Then tmpAoUFile(i - 1).Comment = Leer.GetValue("File" & i, "Comment")
     Next i
     
     ReadAoUFile = tmpAoUFile
@@ -73,7 +71,7 @@ Public Function ReadAoUFile(file As String) As tAoUpdateFile()
 Exit Function
 
 error:
-    MsgBox Err.Description, vbCritical, Err.Number
+    Call MsgBox(Err.Description, vbCritical, Err.Number)
     Set Leer = Nothing
 End Function
 
@@ -82,8 +80,8 @@ End Function
 '
 ' @param localUpdateFile Specifies reference to Local Update File
 ' @param remoteUpdateFile Specifies reference to Remote Update File
-' @return an array of bytes with the updates queue.
-Public Function compareUpdateFiles(localUpdateFile() As tAoUpdateFile, remoteUpdateFile() As tAoUpdateFile) As Byte()
+
+Public Sub CompareUpdateFiles(ByRef localUpdateFile() As tAoUpdateFile, ByRef remoteUpdateFile() As tAoUpdateFile)
 '*************************************************
 'Author: Marco Vanotti (MarKoxX)
 'Last modified: 27/10/2008
@@ -91,86 +89,112 @@ Public Function compareUpdateFiles(localUpdateFile() As tAoUpdateFile, remoteUpd
 '*************************************************
     Dim i As Long
     Dim j As Long
-    Dim tmpArrIndex As Integer
-    Dim tmpArr() As Byte
+    Dim tmpArrIndex As Long
     
-    ReDim tmpArr(0)
+    'ReDim DownloadQueue(0) As Long
+    tmpArrIndex = -1
     
-    For i = 1 To UBound(remoteUpdateFile)
+    For i = 0 To UBound(remoteUpdateFile)
         If i > UBound(localUpdateFile) Then
-        
-            tmpArrIndex = UBound(tmpArr)
-            ReDim Preserve tmpArr(tmpArrIndex + UBound(remoteUpdateFile) - UBound(localUpdateFile))
+            
+            ReDim Preserve DownloadQueue(tmpArrIndex + UBound(remoteUpdateFile) - UBound(localUpdateFile)) As Long
             
             j = i
             While j <= UBound(remoteUpdateFile)
                 tmpArrIndex = tmpArrIndex + 1
                 
-                tmpArr(tmpArrIndex) = j
+                DownloadQueue(tmpArrIndex) = j
                 j = j + 1
             Wend
-
-            compareUpdateFiles = tmpArr
-            Exit Function
             
+            Exit Sub
         End If
         
         If remoteUpdateFile(i).name <> localUpdateFile(i).name Then
-            MsgBox "Erro critico en los archivos ini. Por favor descargue el AoUpdater nuevamente."
+            Call MsgBox("Error critico en los archivos ini. Por favor descargue el AoUpdater nuevamente.")
         End If
-                
+        
         If remoteUpdateFile(i).Version <> localUpdateFile(i).Version Then
             'Version Diffs, add to download queue.
-            ReDim Preserve tmpArr(UBound(tmpArr) + 1)
-            tmpArr(UBound(tmpArr)) = i
+            tmpArrIndex = tmpArrIndex + 1
+            ReDim Preserve DownloadQueue(tmpArrIndex) As Long
+            DownloadQueue(tmpArrIndex) = i
+        ElseIf remoteUpdateFile(i).MD5 <> MD5File(App.Path & "\" & remoteUpdateFile(i).Path & remoteUpdateFile(i).name) Then
+            'File checksum diffs (corrupted file?), add to download queue.
+            tmpArrIndex = tmpArrIndex + 1
+            ReDim Preserve DownloadQueue(tmpArrIndex) As Long
+            DownloadQueue(tmpArrIndex) = i
         End If
     Next i
-    
-    compareUpdateFiles = tmpArr
-End Function
+End Sub
 
 ''
 ' Downloads the Updates from the UpdateQueue.
 '
 ' @param DownloadQueue Specifies reference to UpdateQueue
 ' @param remoteUpdateFile Specifies reference to Remote Update File
-Public Sub DownloadUpdates(DownloadQueue() As Byte)
+
+Public Sub NextDownload()
 '*************************************************
 'Author: Marco Vanotti (MarKoxX)
 'Last modified: 27/10/2008
 '
 '*************************************************
-    Dim i As Long
-    
 'On Error GoTo error
-
-    For i = 1 To UBound(DownloadQueue)
-        If AoUpdateRemote(DownloadQueue(i)).HasPatches Then
-            
+    
+    If DownloadQueueIndex > UBound(DownloadQueue) Then
+' TODO : TERMINAMOS!!
+        ' Override local config file with remote one
+        Call Kill(App.Path & "\" & AOUPDATE_FILE)
+        Name DownloadsPath & "\" & AOUPDATE_FILE As App.Path & "\" & AOUPDATE_FILE
+        
+        'Overwrite / patch every file
+        For DownloadQueueIndex = 0 To UBound(DownloadQueue)
+            With AoUpdateRemote(DownloadQueue(DownloadQueueIndex))
+                
+                If .HasPatches Then
+' TODO : Patch files!
+                Else
+                    If Dir$(App.Path & "\" & .name) <> vbNullString Then
+                        Call Kill(App.Path & "\" & .name)
+                    End If
+                    
+                    Name DownloadsPath & "\" & .name As App.Path & "\" & .Path & "\" & .name
+                End If
+            End With
+        Next DownloadQueueIndex
+        
+        Call MsgBox("TERMINAMOS!")
+        End
+    Else
+        If AoUpdateRemote(DownloadQueue(DownloadQueueIndex)).HasPatches Then
+'TODO : Download and apply patches individually
         Else
-            frmDownload.Show
-            
-            ColDownloadQueue.Add DownloadQueue(i)
-            Call frmDownload.DownloadFile(DownloadQueue(i))
+            'Downlaod file. Map local paths to urls.
+            Call frmDownload.DownloadFile(Replace("\", AoUpdateRemote(DownloadQueue(DownloadQueueIndex)).Path, "/") & AoUpdateRemote(DownloadQueue(DownloadQueueIndex)).name)
         End If
-    Next i
+        
+        'Move on to the next one
+        DownloadQueueIndex = DownloadQueueIndex + 1
+    End If
 Exit Sub
 
 error:
-    MsgBox Err.Description, vbCritical, Err.Number
+    Call MsgBox(Err.Description, vbCritical, Err.Number)
 End Sub
 
-Sub checkAoUpdateIntegrity()
+Private Sub CheckAoUpdateIntegrity()
     Dim nF As Integer
     
     'Look if exists the TEMP folder, if not, create it.
-    If Dir(DownloadsPath, vbDirectory) = vbNullString Then
-        MkDir DownloadsPath
+    If Dir$(DownloadsPath, vbDirectory) = vbNullString Then
+        Call MkDir(DownloadsPath)
     End If
     
     'Do we have a local AoUpdateFile ? If not, create it.
-    If Dir(App.Path & "\" & AOUPDATE_FILE) = vbNullString Then
-        nF = FreeFile
+    If Dir$(App.Path & "\" & AOUPDATE_FILE) = vbNullString Then
+        nF = FreeFile()
+        
         Open App.Path & "\" & AOUPDATE_FILE For Output As #nF
             Print #nF, "# Este archivo contiene las direcciones de los archivos del cliente, con sus respectivas versiones y sus respectivos md5"
             Print #nF, "[INIT]"
@@ -183,36 +207,26 @@ Sub checkAoUpdateIntegrity()
     End If
 End Sub
 
+Public Sub ConfgFileDownloaded()
+    AoUpdateLocal = ReadAoUFile(App.Path & "\" & AOUPDATE_FILE) 'Load the local file
+    AoUpdateRemote = ReadAoUFile(DownloadsPath & AOUPDATE_FILE) 'Load the Remote file
+    
+    Call CompareUpdateFiles(AoUpdateLocal, AoUpdateRemote) 'Compare local vs remote.
+    
+    Call NextDownload
+End Sub
+
 Public Sub Main()
+    Dim i As Long
+    
     DownloadsPath = App.Path & "\TEMP\"
     frmDownload.filePath = DownloadsPath
     
-    Dim i As Long
+    'Display form
+    Call frmDownload.Show
     
+    Call CheckAoUpdateIntegrity
     
-    checkAoUpdateIntegrity
-    'Debug.Print "Checking AoUpdate integrity..."
-    
-    'Download the remote AoUpdate.ini to the TEMP folder
-    ColDownloadQueue.Add 0
-    Call frmDownload.DownloadFile(0, UPDATES_SITE & AOUPDATE_FILE)
-    
-    While frmDownload.Downloading = True
-        DoEvents
-    Wend
-    
-    AoUpdateFileDownloaded = True
-    
-    AoUpdateLocal = ReadAoUFile(App.Path & "\" & "AoUpdate.ini") 'Load the local file
-    AoUpdateRemote = ReadAoUFile(DownloadsPath & "AoUpdate.ini") 'Load the Remote file
-
-    
-    DownloadQueue = compareUpdateFiles(AoUpdateLocal, AoUpdateRemote) 'Compare local vs remote.
-    
-    If UBound(DownloadQueue) > 1 Then
-        Call DownloadUpdates(DownloadQueue)
-        'Patch 'em!
-        'Check MD5 integrity. If wrong, redo queue, only do this once. For everyFile that went right, remake LocalAoUpdateFile
-    Else
-    End If
+    'Download the remote AoUpdate.ini to the TEMP folder and let the magic begin
+    Call frmDownload.DownloadConfigFile
 End Sub
