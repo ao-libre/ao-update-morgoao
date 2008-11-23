@@ -14,9 +14,13 @@ Option Explicit
 Public Const UPDATES_SITE As String = "http://www.argentuuum.com.ar/aoupdate/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
 
+''
+' Defines the maximum difference in version between patcheable files. If it's exceded, the complete file will be downloaded and overwritten.
+Public Const MAX_VERSION_DIFF As Long = 5
+
 Public Type tAoUpdateFile
     name As String              'File name
-    Version As Integer          'The version of the file
+    version As Integer          'The version of the file
     MD5 As String * 32          'It's checksum
     Path As String              'Path in the client to the file from App.Path (the server path is the same, changing '\' with '/')
     HasPatches As Boolean       'Weather if patches are available for this file or not (if not the complete file has to be downloaded)
@@ -57,7 +61,7 @@ On Error GoTo error
     
     For i = 1 To NumFiles
         tmpAoUFile(i - 1).name = Leer.GetValue("File" & i, "Name")
-        tmpAoUFile(i - 1).Version = CInt(Leer.GetValue("File" & i, "Version"))
+        tmpAoUFile(i - 1).version = CInt(Leer.GetValue("File" & i, "Version"))
         tmpAoUFile(i - 1).MD5 = Leer.GetValue("File" & i, "MD5")
         tmpAoUFile(i - 1).Path = Leer.GetValue("File" & i, "Path")
         
@@ -115,7 +119,7 @@ Public Sub CompareUpdateFiles(ByRef localUpdateFile() As tAoUpdateFile, ByRef re
             Call MsgBox("Error critico en los archivos ini. Por favor descargue el AoUpdater nuevamente.")
         End If
         
-        If remoteUpdateFile(i).Version <> localUpdateFile(i).Version Then
+        If remoteUpdateFile(i).version <> localUpdateFile(i).version Then
             'Version Diffs, add to download queue.
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
@@ -142,6 +146,14 @@ Public Sub NextDownload()
 '
 '*************************************************
 On Error GoTo error
+
+' TODO : Con esto emparchamos. El ini de config necesita tener los MD5 de las versiones parcheadas para que no se cague... posiblemente en una sección aparte y se lo lee de nuevo en esta función.
+'#If SeguridadAlkon Then
+'    Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", .MD5, frmDownload.pbDownload)
+'#Else
+'    Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", frmDownload.pbDownload)
+'#End If
+    
     
     If DownloadQueueIndex > UBound(DownloadQueue) Then
         
@@ -149,13 +161,11 @@ On Error GoTo error
         Call Kill(App.Path & "\" & AOUPDATE_FILE)
         Name DownloadsPath & "\" & AOUPDATE_FILE As App.Path & "\" & AOUPDATE_FILE
         
-        'Overwrite / patch every file
+        'Overwrite every file not already patched
         For DownloadQueueIndex = 0 To UBound(DownloadQueue)
             With AoUpdateRemote(DownloadQueue(DownloadQueueIndex))
                 
-                If .HasPatches Then
-' TODO : Patch files!
-                Else
+                If Not .HasPatches Then
                     If Dir$(App.Path & "\" & .Path & "\" & .name) <> vbNullString Then
                         Call Kill(App.Path & "\" & .Path & "\" & .name)
                     End If
@@ -168,21 +178,34 @@ On Error GoTo error
         Call MsgBox("TERMINAMOS!")
         End
     Else
-        If AoUpdateRemote(DownloadQueue(DownloadQueueIndex)).HasPatches Then
+        With AoUpdateRemote(DownloadQueue(DownloadQueueIndex))
+            If .HasPatches Then
+                Dim localVersion As Long
+                
+                'Check if local version is too old to be patched.
+                localVersion = GetVersion(App.Path & "\" & .Path & "\" & .name)
+                
+                If .version - localVersion > MAX_VERSION_DIFF Then
+                    'Our version is too old to be patched. Overwrite it!
+                    .HasPatches = False
+                    Call frmDownload.DownloadFile(Replace("\", .Path, "/") & .name)
+                Else
 'TODO : Download patches individually!
-        Else
-            'Downlaod file. Map local paths to urls.
-            Call frmDownload.DownloadFile(Replace("\", AoUpdateRemote(DownloadQueue(DownloadQueueIndex)).Path, "/") & AoUpdateRemote(DownloadQueue(DownloadQueueIndex)).name)
+                End If
+            Else
+                'Downlaod file. Map local paths to urls.
+                Call frmDownload.DownloadFile(Replace("\", .Path, "/") & .name)
+            End If
         End If
         
         'Move on to the next one
         DownloadQueueIndex = DownloadQueueIndex + 1
     End If
-Exit Sub
+Exit Function
 
 error:
     Call MsgBox(Err.Description, vbCritical, Err.Number)
-End Sub
+End Function
 
 Private Sub CheckAoUpdateIntegrity()
     Dim nF As Integer

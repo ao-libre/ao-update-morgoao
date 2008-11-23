@@ -6,6 +6,7 @@ Module=mod_MD5; Codigo\mod_MD5.bas
 Object={48E59290-9880-11CF-9754-00AA00C00908}#1.0#0; MSINET.ocx
 Object={831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0; Mscomctl.ocx
 Form=Codigo\frmDownload.frm
+Module=modCompression; Codigo\modCompression.bas
 Startup="Sub Main"
 HelpFile=""
 ExeName32="AoUpdate.exe"
