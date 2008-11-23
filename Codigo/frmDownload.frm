@@ -1,6 +1,6 @@
 VERSION 5.00
-Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.ocx"
-Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "Mscomctl.ocx"
+Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.OCX"
+Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
 Begin VB.Form frmDownload 
    BorderStyle     =   0  'None
    Caption         =   "AoUpdate Downloader"
@@ -60,7 +60,7 @@ Public CurrentDownload As Byte
 Public filePath As String
 
 Private Downloading As Boolean
-Private fileName As String
+Private FileName As String
 
 Private downloadingConfig As Boolean
 
@@ -85,9 +85,9 @@ Public Sub DownloadFile(ByVal file As String)
             Call .Execute(sURL, "GET")
         End With
         
-        fileName = ReturnFileOrFolder(sURL, True, True)
+        FileName = ReturnFileOrFolder(sURL, True, True)
         
-        lblDownloadPath.Caption = fileName
+        lblDownloadPath.Caption = FileName
     End If
 End Sub
 
@@ -111,7 +111,7 @@ On Error GoTo error
             'Create the file.
             nF = FreeFile()
             
-            Open filePath & fileName For Binary As nF
+            Open filePath & FileName For Binary As nF
                 While fileSize <> downloaded
                     tmpArr = iDownload.GetChunk(1024, icByteArray)
                     

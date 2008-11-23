@@ -16,7 +16,7 @@ Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
 
 ''
 ' Defines the maximum difference in version between patcheable files. If it's exceded, the complete file will be downloaded and overwritten.
-Public Const MAX_VERSION_DIFF As Long = 5
+Public Const MAX_VERSION_DIFF As Long = 0
 
 Public Type tAoUpdateFile
     name As String              'File name
@@ -27,7 +27,14 @@ Public Type tAoUpdateFile
     Comment As String           'Any comments regarding this file.
 End Type
 
+Public Type tAoUpdatePatches
+    name As String          'its location in the server
+    MD5 As String * 32      'It's Checksum
+End Type
+
 Public DownloadsPath As String
+
+Public AoUpdatePatches() As tAoUpdatePatches
 
 Public AoUpdateRemote() As tAoUpdateFile
 Public AoUpdateLocal() As tAoUpdateFile
@@ -64,9 +71,8 @@ On Error GoTo error
         tmpAoUFile(i - 1).version = CInt(Leer.GetValue("File" & i, "Version"))
         tmpAoUFile(i - 1).MD5 = Leer.GetValue("File" & i, "MD5")
         tmpAoUFile(i - 1).Path = Leer.GetValue("File" & i, "Path")
-        
-        If Leer.KeyExists("HasPatches") Then tmpAoUFile(i - 1).HasPatches = CBool(Leer.GetValue("File" & i, "HasPatches"))
-        If Leer.KeyExists("Comment") Then tmpAoUFile(i - 1).Comment = Leer.GetValue("File" & i, "Comment")
+        tmpAoUFile(i - 1).HasPatches = CBool(Leer.GetValue("File" & i, "HasPatches"))
+        tmpAoUFile(i - 1).Comment = Leer.GetValue("File" & i, "Comment")
     Next i
     
     ReadAoUFile = tmpAoUFile
@@ -170,7 +176,9 @@ On Error GoTo error
                         Call Kill(App.Path & "\" & .Path & "\" & .name)
                     End If
                     
-                    Name DownloadsPath & "\" & .name As App.Path & "\" & .Path & "\" & .name
+                    If Not FileExist(App.Path & "\" & .Path, vbDirectory) Then MkDir (App.Path & "\" & .Path)
+                    
+                    Name DownloadsPath & .name As App.Path & "\" & .Path & "\" & .name
                 End If
             End With
         Next DownloadQueueIndex
@@ -185,27 +193,29 @@ On Error GoTo error
                 'Check if local version is too old to be patched.
                 localVersion = GetVersion(App.Path & "\" & .Path & "\" & .name)
                 
-                If .version - localVersion > MAX_VERSION_DIFF Then
-                    'Our version is too old to be patched. Overwrite it!
+                If ReadPatches(DownloadQueue(DownloadQueueIndex) + 1, localVersion, .version, App.Path & "\" & AOUPDATE_FILE) = False Then
+                    'Our version is too old to be patched (it doesn't exist in the server). Overwrite it!
                     .HasPatches = False
                     Call frmDownload.DownloadFile(Replace("\", .Path, "/") & .name)
                 Else
-'TODO : Download patches individually!
+                    'TODO : Download patches individually!
+                    'The File is parcheable!
+                    MsgBox "asd"
                 End If
             Else
                 'Downlaod file. Map local paths to urls.
                 Call frmDownload.DownloadFile(Replace("\", .Path, "/") & .name)
             End If
-        End If
+        End With
         
         'Move on to the next one
         DownloadQueueIndex = DownloadQueueIndex + 1
     End If
-Exit Function
+Exit Sub
 
 error:
     Call MsgBox(Err.Description, vbCritical, Err.Number)
-End Function
+End Sub
 
 Private Sub CheckAoUpdateIntegrity()
     Dim nF As Integer
@@ -255,3 +265,41 @@ Public Sub Main()
     'Download the remote AoUpdate.ini to the TEMP folder and let the magic begin
     Call frmDownload.DownloadConfigFile
 End Sub
+
+Function FileExist(ByVal file As String, ByVal FileType As VbFileAttribute) As Boolean
+    FileExist = (Dir$(file, FileType) <> "")
+End Function
+
+''
+' Loads the patches and their md5. Check if a file isn't too old to be patched
+'
+' @param NumFile Specifies reference to File in AoUpdateFile file.
+' @param begininVersion Specifies reference to LocalVersion
+' @param endingVersion Specifies reference to last version of the file
+' @param sFile specifies reference to ConfiFile to read data from.
+' @returns True if the file can be patcheable or false if the file can't be patcheable
+Function ReadPatches(numFile As Integer, ByVal beginingVersion As Long, ByVal endingVersion As Long, sFile As String) As Boolean
+'*************************************************
+'Author: Marco Vanotti (MarKoxX)
+'Last modified: 27/10/2008
+'
+'*************************************************
+    Dim nF As Integer
+    Dim i As Long
+    Dim Leer As New clsIniReader
+    
+    nF = FreeFile
+    
+    Call Leer.Initialize(sFile)
+    
+    If Not Leer.KeyExists("PATCHES" & numFile & "-" & beginingVersion) Then Exit Function
+    ReadPatches = True
+
+    ReDim AoUpdatePatches(endingVersion - beginingVersion) As tAoUpdatePatches
+    
+    For i = beginingVersion To endingVersion - 1
+        AoUpdatePatches(i - beginingVersion).name = Leer.GetValue("PATCHES" & numFile & "-" & i, "name")
+        AoUpdatePatches(i - beginingVersion).MD5 = Leer.GetValue("PATCHES" & numFile & "-" & i, "md5")
+    Next
+        
+End Function
