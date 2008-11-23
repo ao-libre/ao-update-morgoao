@@ -130,7 +130,7 @@ Public Sub CompareUpdateFiles(ByRef localUpdateFile() As tAoUpdateFile, ByRef re
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
             DownloadQueue(tmpArrIndex) = i
-        ElseIf remoteUpdateFile(i).MD5 <> MD5File(App.Path & "\" & remoteUpdateFile(i).Path & remoteUpdateFile(i).name) Then
+        ElseIf remoteUpdateFile(i).MD5 <> MD5File(App.Path & "\" & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name) Then
             'File checksum diffs (corrupted file?), add to download queue.
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
@@ -190,21 +190,24 @@ On Error GoTo error
             If .HasPatches Then
                 Dim localVersion As Long
                 
-                'Check if local version is too old to be patched.
-                localVersion = GetVersion(App.Path & "\" & .Path & "\" & .name)
+                localVersion = -1
                 
-                If ReadPatches(DownloadQueue(DownloadQueueIndex) + 1, localVersion, .version, App.Path & "\" & AOUPDATE_FILE) = False Then
-                    'Our version is too old to be patched (it doesn't exist in the server). Overwrite it!
-                    .HasPatches = False
-                    Call frmDownload.DownloadFile(Replace("\", .Path, "/") & .name)
-                Else
+                If FileExist(App.Path & "\" & .Path & "\" & .name, vbArchive) Then 'Check if local version is too old to be patched.
+                    localVersion = GetVersion(App.Path & "\" & .Path & "\" & .name)
+                End If
+                            
+                If ReadPatches(DownloadQueue(DownloadQueueIndex) + 1, localVersion, .version, App.Path & "\" & AOUPDATE_FILE) Then
                     'TODO : Download patches individually!
                     'The File is parcheable!
                     MsgBox "asd"
+                Else
+                    'Our version is too old to be patched (it doesn't exist in the server). Overwrite it!
+                    .HasPatches = False
+                    Call frmDownload.DownloadFile(Replace(.Path, "\", "/") & "/" & .name)
                 End If
             Else
                 'Downlaod file. Map local paths to urls.
-                Call frmDownload.DownloadFile(Replace("\", .Path, "/") & .name)
+                Call frmDownload.DownloadFile(Replace(.Path, "\", "/") & .name)
             End If
         End With
         
@@ -292,7 +295,7 @@ Function ReadPatches(numFile As Integer, ByVal beginingVersion As Long, ByVal en
     
     Call Leer.Initialize(sFile)
     
-    If Not Leer.KeyExists("PATCHES" & numFile & "-" & beginingVersion) Then Exit Function
+    If Not Leer.KeyExists("PATCHES" & numFile & "-" & beginingVersion) Or beginingVersion = -1 Then Exit Function
     ReadPatches = True
 
     ReDim AoUpdatePatches(endingVersion - beginingVersion) As tAoUpdatePatches
