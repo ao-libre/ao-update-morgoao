@@ -36,6 +36,7 @@ Public AoUpdateRemote() As tAoUpdateFile
 Public AoUpdateLocal() As tAoUpdateFile
 Public DownloadQueue() As Long
 Public DownloadQueueIndex As Long
+Public PatchQueueIndex As Long
 
 ''
 ' Loads the AoUpdate Ini File to an struct array
@@ -148,14 +149,6 @@ Public Sub NextDownload()
 '
 '*************************************************
 On Error GoTo error
-
-' TODO : Con esto emparchamos. El ini de config necesita tener los MD5 de las versiones parcheadas para que no se cague... posiblemente en una sección aparte y se lo lee de nuevo en esta función.
-'#If SeguridadAlkon Then
-'    Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", .MD5, frmDownload.pbDownload)
-'#Else
-'    Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", frmDownload.pbDownload)
-'#End If
-    
     
     If DownloadQueueIndex > UBound(DownloadQueue) Then
         
@@ -193,10 +186,10 @@ On Error GoTo error
                 End If
                 
                 If ReadPatches(DownloadQueue(DownloadQueueIndex) + 1, localVersion, .version, App.Path & "\" & AOUPDATE_FILE) Then
-                    downloadingPatch = True
-'TODO : Download patches individually!
-                    'The File is parcheable!
-                    MsgBox "asd"
+                    'Reset index and download patches!
+                    PatchQueueIndex = 0
+'TODO : Esto claramente está mal, name no me da el path!
+                    Call frmDownload.DownloadPatch(AoUpdatePatches(PatchQueueIndex).name)
                 Else
                     'Our version is too old to be patched (it doesn't exist in the server). Overwrite it!
                     .HasPatches = False
@@ -215,6 +208,32 @@ Exit Sub
 
 error:
     Call MsgBox(Err.Description, vbCritical, Err.Number)
+End Sub
+
+Public Sub PatchDownloaded()
+    Dim localVersion As Long
+    
+    localVersion = -1
+    
+    With AoUpdateRemote(DownloadQueue(DownloadQueueIndex - 1))
+        'Apply downlaoded patch!
+#If SeguridadAlkon Then
+        Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", AoUpdatePatches(PatchQueueIndex).MD5, frmDownload.pbDownload)
+#Else
+        Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", frmDownload.pbDownload)
+#End If
+        
+        localVersion = GetVersion(App.Path & "\" & .Path & "\" & .name)
+        
+        If .version = localVersion Then
+            'We finished patching this file, continue!
+            Call NextDownload
+        Else
+            PatchQueueIndex = PatchQueueIndex + 1
+'TODO : Esto claramente está mal, name no me da el path!
+            Call frmDownload.DownloadPatch(AoUpdatePatches(PatchQueueIndex).name)
+        End If
+    End With
 End Sub
 
 Private Sub CheckAoUpdateIntegrity()

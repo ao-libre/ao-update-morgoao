@@ -1,6 +1,6 @@
 VERSION 5.00
-Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.OCX"
-Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
+Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.ocx"
+Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "Mscomctl.ocx"
 Begin VB.Form frmDownload 
    BorderStyle     =   0  'None
    Caption         =   "AoUpdate Downloader"
@@ -63,11 +63,18 @@ Private Downloading As Boolean
 Private FileName As String
 
 Private downloadingConfig As Boolean
+Private downloadingPatch As Boolean
 
 Public Sub DownloadConfigFile()
     downloadingConfig = True
     
     Call DownloadFile(AOUPDATE_FILE)
+End Sub
+
+Public Sub DownloadPatch(ByVal file As String)
+    downloadingPatch = True
+    
+    Call DownloadFile(file)
 End Sub
 
 Public Sub DownloadFile(ByVal file As String)
@@ -150,6 +157,10 @@ Private Sub DownloadComplete()
         downloadingConfig = False
         
         Call ConfgFileDownloaded
+    ElseIf downloadingPatch Then
+        downloadingPatch = False
+        
+        Call PatchDownloaded
     Else
         Call NextDownload
     End If
