@@ -188,7 +188,6 @@ On Error GoTo error
                 If ReadPatches(DownloadQueue(DownloadQueueIndex) + 1, localVersion, .version, App.Path & "\" & AOUPDATE_FILE) Then
                     'Reset index and download patches!
                     PatchQueueIndex = 0
-'TODO : Esto claramente está mal, name no me da el path!
                     Call frmDownload.DownloadPatch(AoUpdatePatches(PatchQueueIndex).name)
                 Else
                     'Our version is too old to be patched (it doesn't exist in the server). Overwrite it!
@@ -230,7 +229,6 @@ Public Sub PatchDownloaded()
             Call NextDownload
         Else
             PatchQueueIndex = PatchQueueIndex + 1
-'TODO : Esto claramente está mal, name no me da el path!
             Call frmDownload.DownloadPatch(AoUpdatePatches(PatchQueueIndex).name)
         End If
     End With
