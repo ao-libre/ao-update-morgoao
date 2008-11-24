@@ -211,7 +211,7 @@ End Sub
 ' @param    first The first index to consider when sorting.
 ' @param    last The last index to be considered when sorting.
 
-Private Sub SortChildNodes(ByRef Node As MainNode, ByVal First As Integer, ByVal Last As Integer)
+Private Sub SortChildNodes(ByRef Node As MainNode, ByVal first As Integer, ByVal last As Integer)
 '**************************************************************
 'Author: Juan Martín Sotuyo Dodero
 'Last Modify Date: 5/01/2006
@@ -223,17 +223,17 @@ Private Sub SortChildNodes(ByRef Node As MainNode, ByVal First As Integer, ByVal
     Dim comp As String      'Item used to compare
     Dim temp As ChildNode
     
-    min = First
-    max = Last
+    min = first
+    max = last
     
     With Node
         comp = .values((min + max) \ 2).key
     
         Do While min <= max
-            Do While .values(min).key < comp And min < Last
+            Do While .values(min).key < comp And min < last
                 min = min + 1
             Loop
-            Do While .values(max).key > comp And max > First
+            Do While .values(max).key > comp And max > first
                 max = max - 1
             Loop
             If min <= max Then
@@ -246,8 +246,8 @@ Private Sub SortChildNodes(ByRef Node As MainNode, ByVal First As Integer, ByVal
         Loop
     End With
     
-    If First < max Then SortChildNodes Node, First, max
-    If min < Last Then SortChildNodes Node, min, Last
+    If first < max Then SortChildNodes Node, first, max
+    If min < last Then SortChildNodes Node, min, last
 End Sub
 
 ''
@@ -256,7 +256,7 @@ End Sub
 ' @param    first The first index to consider when sorting.
 ' @param    last The last index to be considered when sorting.
 
-Private Sub SortMainNodes(ByVal First As Integer, ByVal Last As Integer)
+Private Sub SortMainNodes(ByVal first As Integer, ByVal last As Integer)
 '**************************************************************
 'Author: Juan Martín Sotuyo Dodero
 'Last Modify Date: 5/01/2006
@@ -268,16 +268,16 @@ Private Sub SortMainNodes(ByVal First As Integer, ByVal Last As Integer)
     Dim comp As String      'Item used to compare
     Dim temp As MainNode
     
-    min = First
-    max = Last
+    min = first
+    max = last
     
     comp = fileData((min + max) \ 2).name
     
     Do While min <= max
-        Do While fileData(min).name < comp And min < Last
+        Do While fileData(min).name < comp And min < last
             min = min + 1
         Loop
-        Do While fileData(max).name > comp And max > First
+        Do While fileData(max).name > comp And max > first
             max = max - 1
         Loop
         If min <= max Then
@@ -289,8 +289,8 @@ Private Sub SortMainNodes(ByVal First As Integer, ByVal Last As Integer)
         End If
     Loop
     
-    If First < max Then SortMainNodes First, max
-    If min < Last Then SortMainNodes min, Last
+    If first < max Then SortMainNodes first, max
+    If min < last Then SortMainNodes min, last
 End Sub
 
 ''
@@ -414,4 +414,3 @@ Public Function KeyExists(ByVal name As String) As Boolean
 '**************************************************************
     KeyExists = FindMain(UCase$(name)) >= 0
 End Function
-

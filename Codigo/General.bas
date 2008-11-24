@@ -14,10 +14,6 @@ Option Explicit
 Public Const UPDATES_SITE As String = "http://www.argentuuum.com.ar/aoupdate/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
 
-''
-' Defines the maximum difference in version between patcheable files. If it's exceded, the complete file will be downloaded and overwritten.
-Public Const MAX_VERSION_DIFF As Long = 0
-
 Public Type tAoUpdateFile
     name As String              'File name
     version As Integer          'The version of the file
@@ -195,9 +191,10 @@ On Error GoTo error
                 If FileExist(App.Path & "\" & .Path & "\" & .name, vbArchive) Then 'Check if local version is too old to be patched.
                     localVersion = GetVersion(App.Path & "\" & .Path & "\" & .name)
                 End If
-                            
+                
                 If ReadPatches(DownloadQueue(DownloadQueueIndex) + 1, localVersion, .version, App.Path & "\" & AOUPDATE_FILE) Then
-                    'TODO : Download patches individually!
+                    downloadingPatch = True
+'TODO : Download patches individually!
                     'The File is parcheable!
                     MsgBox "asd"
                 Else
@@ -269,7 +266,7 @@ Public Sub Main()
     Call frmDownload.DownloadConfigFile
 End Sub
 
-Function FileExist(ByVal file As String, ByVal FileType As VbFileAttribute) As Boolean
+Public Function FileExist(ByVal file As String, ByVal FileType As VbFileAttribute) As Boolean
     FileExist = (Dir$(file, FileType) <> "")
 End Function
 
@@ -280,8 +277,10 @@ End Function
 ' @param begininVersion Specifies reference to LocalVersion
 ' @param endingVersion Specifies reference to last version of the file
 ' @param sFile specifies reference to ConfiFile to read data from.
+'
 ' @returns True if the file can be patcheable or false if the file can't be patcheable
-Function ReadPatches(numFile As Integer, ByVal beginingVersion As Long, ByVal endingVersion As Long, sFile As String) As Boolean
+
+Private Function ReadPatches(ByVal numFile As Integer, ByVal beginingVersion As Long, ByVal endingVersion As Long, ByVal sFile As String) As Boolean
 '*************************************************
 'Author: Marco Vanotti (MarKoxX)
 'Last modified: 27/10/2008
@@ -297,12 +296,11 @@ Function ReadPatches(numFile As Integer, ByVal beginingVersion As Long, ByVal en
     
     If Not Leer.KeyExists("PATCHES" & numFile & "-" & beginingVersion) Or beginingVersion = -1 Then Exit Function
     ReadPatches = True
-
-    ReDim AoUpdatePatches(endingVersion - beginingVersion) As tAoUpdatePatches
+    
+    ReDim AoUpdatePatches(endingVersion - beginingVersion - 1) As tAoUpdatePatches
     
     For i = beginingVersion To endingVersion - 1
         AoUpdatePatches(i - beginingVersion).name = Leer.GetValue("PATCHES" & numFile & "-" & i, "name")
         AoUpdatePatches(i - beginingVersion).MD5 = Leer.GetValue("PATCHES" & numFile & "-" & i, "md5")
-    Next
-        
+    Next i
 End Function
