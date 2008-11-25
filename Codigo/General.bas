@@ -11,8 +11,12 @@ Attribute VB_Name = "General"
 
 Option Explicit
 
+Public Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
+
+
 Public Const UPDATES_SITE As String = "http://www.argentuuum.com.ar/aoupdate/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
+
 
 Public Type tAoUpdateFile
     name As String              'File name
@@ -37,6 +41,7 @@ Public AoUpdateLocal() As tAoUpdateFile
 Public DownloadQueue() As Long
 Public DownloadQueueIndex As Long
 Public PatchQueueIndex As Long
+Public ClientParams As String
 
 ''
 ' Loads the AoUpdate Ini File to an struct array
@@ -148,10 +153,11 @@ Public Sub NextDownload()
 'Last modified: 27/10/2008
 '
 '*************************************************
-On Error GoTo error
+On Error GoTo noqueue
     
     If DownloadQueueIndex > UBound(DownloadQueue) Then
         
+On Error GoTo error
         ' Override local config file with remote one
         Call Kill(App.Path & "\" & AOUPDATE_FILE)
         Name DownloadsPath & "\" & AOUPDATE_FILE As App.Path & "\" & AOUPDATE_FILE
@@ -159,15 +165,19 @@ On Error GoTo error
         'Overwrite every file not already patched
         For DownloadQueueIndex = 0 To UBound(DownloadQueue)
             With AoUpdateRemote(DownloadQueue(DownloadQueueIndex))
-                
                 If Not .HasPatches Then
-                    If Dir$(App.Path & "\" & .Path & "\" & .name) <> vbNullString Then
-                        Call Kill(App.Path & "\" & .Path & "\" & .name)
+                    If .name <> App.EXEName & ".exe" Then
+                        If Dir$(App.Path & "\" & .Path & "\" & .name) <> vbNullString Then
+                            Call Kill(App.Path & "\" & .Path & "\" & .name)
+                        End If
+                        
+                        If Not FileExist(App.Path & "\" & .Path, vbDirectory) Then MkDir (App.Path & "\" & .Path)
+                        
+                        Name DownloadsPath & .name As App.Path & "\" & .Path & "\" & .name
+                    Else
+                        'We are trying to patch AoUpdate.exe, so we need to give an extra argument to client
+                        ClientParams = "/patchao '" & App.EXEName & ".exe"
                     End If
-                    
-                    If Not FileExist(App.Path & "\" & .Path, vbDirectory) Then MkDir (App.Path & "\" & .Path)
-                    
-                    Name DownloadsPath & .name As App.Path & "\" & .Path & "\" & .name
                 End If
             End With
         Next DownloadQueueIndex
@@ -205,6 +215,11 @@ On Error GoTo error
     End If
 Exit Sub
 
+noqueue: 'If we get here, it means that there isn't any update.
+    Shell App.Path & "\Argentum.exe /secure" 'We open Argentum.exe in normal way
+    End
+Exit Sub
+
 error:
     Call MsgBox(Err.Description, vbCritical, Err.Number)
 End Sub
@@ -221,6 +236,8 @@ Public Sub PatchDownloaded()
 #Else
         Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", frmDownload.pbDownload)
 #End If
+        'Delete patch after patching!
+        Kill DownloadsPath & "\" & Right(AoUpdatePatches(PatchQueueIndex).name, Len(AoUpdatePatches(PatchQueueIndex).name) - InStrRev(AoUpdatePatches(PatchQueueIndex).name, "/"))
         
         localVersion = GetVersion(App.Path & "\" & .Path & "\" & .name)
         
