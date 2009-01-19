@@ -21,7 +21,7 @@ Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
 Public Type tAoUpdateFile
     name As String              'File name
     version As Integer          'The version of the file
-    MD5 As String * 32          'It's checksum
+    md5 As String * 32          'It's checksum
     Path As String              'Path in the client to the file from App.Path (the server path is the same, changing '\' with '/')
     HasPatches As Boolean       'Weather if patches are available for this file or not (if not the complete file has to be downloaded)
     Comment As String           'Any comments regarding this file.
@@ -29,7 +29,7 @@ End Type
 
 Public Type tAoUpdatePatches
     name As String          'its location in the server
-    MD5 As String * 32      'It's Checksum
+    md5 As String * 32      'It's Checksum
 End Type
 
 Public DownloadsPath As String
@@ -71,7 +71,7 @@ On Error GoTo error
     For i = 1 To NumFiles
         tmpAoUFile(i - 1).name = Leer.GetValue("File" & i, "Name")
         tmpAoUFile(i - 1).version = CInt(Leer.GetValue("File" & i, "Version"))
-        tmpAoUFile(i - 1).MD5 = Leer.GetValue("File" & i, "MD5")
+        tmpAoUFile(i - 1).md5 = Leer.GetValue("File" & i, "MD5")
         tmpAoUFile(i - 1).Path = Leer.GetValue("File" & i, "Path")
         tmpAoUFile(i - 1).HasPatches = CBool(Leer.GetValue("File" & i, "HasPatches"))
         tmpAoUFile(i - 1).Comment = Leer.GetValue("File" & i, "Comment")
@@ -132,7 +132,7 @@ Public Sub CompareUpdateFiles(ByRef localUpdateFile() As tAoUpdateFile, ByRef re
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
             DownloadQueue(tmpArrIndex) = i
-        ElseIf remoteUpdateFile(i).MD5 <> MD5File(App.Path & "\" & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name) Then
+        ElseIf remoteUpdateFile(i).md5 <> MD5File(App.Path & "\" & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name) Then
             'File checksum diffs (corrupted file?), add to download queue.
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
@@ -156,7 +156,7 @@ Public Sub NextDownload()
 On Error GoTo noqueue
     
     If DownloadQueueIndex > UBound(DownloadQueue) Then
-        
+
 On Error GoTo error
         ' Override local config file with remote one
         Call Kill(App.Path & "\" & AOUPDATE_FILE)
@@ -182,8 +182,15 @@ On Error GoTo error
             End With
         Next DownloadQueueIndex
         
-        Call MsgBox("TERMINAMOS!")
-        End
+        'Call MsgBox("TERMINAMOS!")
+        Call AddtoRichTextBox(frmDownload.rtbDetalle, "Cliente de Argentum Online actualizado correctamente.", 255, 255, 255, True, False, False)
+        frmDownload.cmdComenzar.Enabled = True
+        
+        If frmDownload.chkJugar.value = 1 Then
+            Call ShellArgentum
+            End
+        End If
+        'End
     Else
         With AoUpdateRemote(DownloadQueue(DownloadQueueIndex))
             If .HasPatches Then
@@ -202,10 +209,16 @@ On Error GoTo error
                 Else
                     'Our version is too old to be patched (it doesn't exist in the server). Overwrite it!
                     .HasPatches = False
+                    
+                    Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargando " & .name & " - " & .Comment, 255, 255, 255, True, False, False)
+                    
                     Call frmDownload.DownloadFile(Replace(.Path, "\", "/") & "/" & .name)
                 End If
             Else
                 'Downlaod file. Map local paths to urls.
+                
+                Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargando " & .name & " - " & .Comment, 255, 255, 255, True, False, False)
+                
                 Call frmDownload.DownloadFile(Replace(.Path, "\", "/") & .name)
             End If
         End With
@@ -216,8 +229,14 @@ On Error GoTo error
 Exit Sub
 
 noqueue: 'If we get here, it means that there isn't any update.
-    Shell App.Path & "\Argentum.exe /secure" 'We open Argentum.exe in normal way
-    End
+    
+    Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargas finalizadas", 255, 255, 255, True, False, False)
+    frmDownload.cmdComenzar.Enabled = True
+    
+    If frmDownload.chkJugar.value = 1 Then
+        Call ShellArgentum
+        End
+    End If
 Exit Sub
 
 error:
@@ -232,7 +251,7 @@ Public Sub PatchDownloaded()
     With AoUpdateRemote(DownloadQueue(DownloadQueueIndex - 1))
         'Apply downlaoded patch!
 #If SeguridadAlkon Then
-        Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", AoUpdatePatches(PatchQueueIndex).MD5, frmDownload.pbDownload)
+        Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", AoUpdatePatches(PatchQueueIndex).md5, frmDownload.pbDownload)
 #Else
         Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", frmDownload.pbDownload)
 #End If
@@ -300,6 +319,14 @@ Public Sub Main()
     Call frmDownload.DownloadConfigFile
 End Sub
 
+Public Sub ShellArgentum()
+On Error GoTo error
+    Shell App.Path & "\Argentum.exe /secure" 'We open Argentum.exe in normal way
+    Exit Sub
+error:
+    MsgBox "Error al ejecutar el juego", vbCritical
+End Sub
+
 Public Function FileExist(ByVal file As String, ByVal FileType As VbFileAttribute) As Boolean
     FileExist = (Dir$(file, FileType) <> "")
 End Function
@@ -335,6 +362,36 @@ Private Function ReadPatches(ByVal numFile As Integer, ByVal beginingVersion As 
     
     For i = beginingVersion To endingVersion - 1
         AoUpdatePatches(i - beginingVersion).name = Leer.GetValue("PATCHES" & numFile & "-" & i, "name")
-        AoUpdatePatches(i - beginingVersion).MD5 = Leer.GetValue("PATCHES" & numFile & "-" & i, "md5")
+        AoUpdatePatches(i - beginingVersion).md5 = Leer.GetValue("PATCHES" & numFile & "-" & i, "md5")
     Next i
 End Function
+
+Sub AddtoRichTextBox(ByRef RichTextBox As RichTextBox, ByVal Text As String, Optional ByVal red As Integer = -1, Optional ByVal green As Integer, Optional ByVal blue As Integer, Optional ByVal bold As Boolean = False, Optional ByVal italic As Boolean = False, Optional ByVal bCrLf As Boolean = False)
+'******************************************
+'Adds text to a Richtext box at the bottom.
+'Automatically scrolls to new text.
+'Text box MUST be multiline and have a 3D
+'apperance!
+'Pablo (ToxicWaste) 01/26/2007 : Now the list refeshes properly.
+'Juan Martín Sotuyo Dodero (Maraxus) 03/29/2007 : Replaced ToxicWaste's code for extra performance.
+'******************************************r
+    With RichTextBox
+        If Len(.Text) > 1000 Then
+            'Get rid of first line
+            .SelStart = InStr(1, .Text, vbCrLf) + 1
+            .SelLength = Len(.Text) - .SelStart + 2
+            .TextRTF = .SelRTF
+        End If
+        
+        .SelStart = Len(RichTextBox.Text)
+        .SelLength = 0
+        .SelBold = bold
+        .SelItalic = italic
+        
+        If Not red = -1 Then .SelColor = RGB(red, green, blue)
+        
+        .SelText = IIf(bCrLf, Text, Text & vbCrLf)
+        
+        RichTextBox.Refresh
+    End With
+End Sub

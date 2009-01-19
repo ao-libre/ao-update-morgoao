@@ -7,6 +7,7 @@ Object={48E59290-9880-11CF-9754-00AA00C00908}#1.0#0; MSINET.OCX
 Object={831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0; MSCOMCTL.OCX
 Form=Codigo\frmDownload.frm
 Module=modCompression; Codigo\modCompression.bas
+Object={3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0; RICHTX32.OCX
 Startup="Sub Main"
 HelpFile=""
 ExeName32="AoUpdate.exe"

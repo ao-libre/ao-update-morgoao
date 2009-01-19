@@ -1,52 +1,126 @@
 VERSION 5.00
-Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.ocx"
-Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "Mscomctl.ocx"
+Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.OCX"
+Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
+Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "RICHTX32.OCX"
 Begin VB.Form frmDownload 
+   BackColor       =   &H00E0E0E0&
    BorderStyle     =   0  'None
    Caption         =   "AoUpdate Downloader"
-   ClientHeight    =   1560
+   ClientHeight    =   5940
    ClientLeft      =   0
    ClientTop       =   0
    ClientWidth     =   8940
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   ScaleHeight     =   1560
+   ScaleHeight     =   5940
    ScaleWidth      =   8940
    ShowInTaskbar   =   0   'False
    StartUpPosition =   1  'CenterOwner
+   Begin VB.CommandButton cmdComenzar 
+      BackColor       =   &H00C0C0C0&
+      Caption         =   "Comenzar a Jugar!"
+      BeginProperty Font 
+         Name            =   "MS Sans Serif"
+         Size            =   12
+         Charset         =   0
+         Weight          =   700
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   615
+      Left            =   3203
+      Style           =   1  'Graphical
+      TabIndex        =   5
+      Top             =   5160
+      Width           =   2535
+   End
+   Begin VB.CheckBox chkJugar 
+      BackColor       =   &H00E0E0E0&
+      Caption         =   "Jugar al finalizar actualización"
+      BeginProperty Font 
+         Name            =   "MS Sans Serif"
+         Size            =   9.75
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   255
+      Left            =   120
+      TabIndex        =   4
+      Top             =   5520
+      Width           =   3015
+   End
+   Begin RichTextLib.RichTextBox rtbDetalle 
+      Height          =   2415
+      Left            =   263
+      TabIndex        =   3
+      Top             =   240
+      Width           =   8415
+      _ExtentX        =   14843
+      _ExtentY        =   4260
+      _Version        =   393217
+      BackColor       =   12632256
+      Enabled         =   -1  'True
+      ReadOnly        =   -1  'True
+      ScrollBars      =   2
+      TextRTF         =   $"frmDownload.frx":0000
+   End
    Begin MSComctlLib.ProgressBar pbDownload 
-      Height          =   375
-      Left            =   840
+      Height          =   495
+      Left            =   750
       TabIndex        =   0
-      Top             =   923
+      Top             =   3570
       Width           =   7455
       _ExtentX        =   13150
-      _ExtentY        =   661
+      _ExtentY        =   873
       _Version        =   393216
       Appearance      =   1
    End
    Begin InetCtlsObjects.Inet iDownload 
-      Left            =   0
-      Top             =   0
+      Left            =   120
+      Top             =   2520
       _ExtentX        =   1005
       _ExtentY        =   1005
       _Version        =   393216
    End
    Begin VB.Label lblDownloadPath 
-      Height          =   495
-      Left            =   2539
+      BackStyle       =   0  'Transparent
+      BeginProperty Font 
+         Name            =   "MS Sans Serif"
+         Size            =   9.75
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   255
+      Left            =   2663
       TabIndex        =   2
-      Top             =   263
-      Width           =   5655
+      Top             =   3150
+      Width           =   5775
    End
    Begin VB.Label Label1 
+      BackStyle       =   0  'Transparent
       Caption         =   "Descargando Archivo: "
+      BeginProperty Font 
+         Name            =   "MS Sans Serif"
+         Size            =   9.75
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
       Height          =   255
-      Left            =   739
+      Left            =   503
       TabIndex        =   1
-      Top             =   263
-      Width           =   1695
+      Top             =   3150
+      Width           =   2055
    End
 End
 Attribute VB_Name = "frmDownload"
@@ -67,6 +141,8 @@ Private downloadingPatch As Boolean
 
 Public Sub DownloadConfigFile()
     downloadingConfig = True
+    
+    Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargando archivo de configuración", 255, 255, 255, True, False, False)
     
     Call DownloadFile(AOUPDATE_FILE)
 End Sub
@@ -96,6 +172,15 @@ Public Sub DownloadFile(ByVal file As String)
         
         lblDownloadPath.Caption = FileName
     End If
+End Sub
+
+Private Sub cmdComenzar_Click()
+    Call ShellArgentum
+End Sub
+
+Private Sub Form_Load()
+    chkJugar.value = 0
+    cmdComenzar.Enabled = False
 End Sub
 
 Private Sub iDownload_StateChanged(ByVal State As Integer)
