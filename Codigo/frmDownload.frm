@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.OCX"
 Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
-Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "RICHTX32.OCX"
+Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "richtx32.ocx"
 Begin VB.Form frmDownload 
    BackColor       =   &H00E0E0E0&
    BorderStyle     =   0  'None
@@ -17,6 +17,26 @@ Begin VB.Form frmDownload
    ScaleWidth      =   8940
    ShowInTaskbar   =   0   'False
    StartUpPosition =   1  'CenterOwner
+   Begin VB.CommandButton cmdExit 
+      BackColor       =   &H00C0C0C0&
+      Cancel          =   -1  'True
+      Caption         =   "Salir"
+      BeginProperty Font 
+         Name            =   "MS Sans Serif"
+         Size            =   12
+         Charset         =   0
+         Weight          =   700
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   375
+      Left            =   7200
+      Style           =   1  'Graphical
+      TabIndex        =   6
+      Top             =   5400
+      Width           =   1575
+   End
    Begin VB.CommandButton cmdComenzar 
       BackColor       =   &H00C0C0C0&
       Caption         =   "Comenzar a Jugar!"
@@ -52,6 +72,7 @@ Begin VB.Form frmDownload
       Left            =   120
       TabIndex        =   4
       Top             =   5520
+      Value           =   1  'Checked
       Width           =   3015
    End
    Begin RichTextLib.RichTextBox rtbDetalle 
@@ -142,7 +163,7 @@ Private downloadingPatch As Boolean
 Public Sub DownloadConfigFile()
     downloadingConfig = True
     
-    Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargando archivo de configuración", 255, 255, 255, True, False, False)
+    Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargando archivo de configuración.", 255, 255, 255, True, False, False)
     
     Call DownloadFile(AOUPDATE_FILE)
 End Sub
@@ -178,8 +199,13 @@ Private Sub cmdComenzar_Click()
     Call ShellArgentum
 End Sub
 
+Private Sub cmdExit_Click()
+    End
+End Sub
+
 Private Sub Form_Load()
-    chkJugar.value = 0
+
+    chkJugar.value = vbChecked
     cmdComenzar.Enabled = False
 End Sub
 

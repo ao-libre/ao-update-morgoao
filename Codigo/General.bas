@@ -16,6 +16,7 @@ Public Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (By
 
 Public Const UPDATES_SITE As String = "http://www.argentuuum.com.ar/aoupdate/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
+Public Const PARAM_UPDATED As String = "/uptodate"
 
 
 Public Type tAoUpdateFile
@@ -176,19 +177,19 @@ On Error GoTo error
                         Name DownloadsPath & .name As App.Path & "\" & .Path & "\" & .name
                     Else
                         'We are trying to patch AoUpdate.exe, so we need to give an extra argument to client
-                        ClientParams = "/patchao '" & App.EXEName & ".exe"
+                        ClientParams = "/patchao '" & App.EXEName & ".exe'"
                     End If
                 End If
             End With
         Next DownloadQueueIndex
         
         'Call MsgBox("TERMINAMOS!")
+        ClientParams = PARAM_UPDATED & " " & ClientParams
         Call AddtoRichTextBox(frmDownload.rtbDetalle, "Cliente de Argentum Online actualizado correctamente.", 255, 255, 255, True, False, False)
         frmDownload.cmdComenzar.Enabled = True
         
         If frmDownload.chkJugar.value = 1 Then
             Call ShellArgentum
-            End
         End If
         'End
     Else
@@ -232,6 +233,8 @@ noqueue: 'If we get here, it means that there isn't any update.
     
     Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargas finalizadas", 255, 255, 255, True, False, False)
     frmDownload.cmdComenzar.Enabled = True
+    
+    ClientParams = PARAM_UPDATED & " " & ClientParams
     
     If frmDownload.chkJugar.value = 1 Then
         Call ShellArgentum
@@ -283,13 +286,16 @@ Private Sub CheckAoUpdateIntegrity()
         nF = FreeFile()
         
         Open App.Path & "\" & AOUPDATE_FILE For Output As #nF
-            Print #nF, "# Este archivo contiene las direcciones de los archivos del cliente, con sus respectivas versiones y sus respectivos md5"
+            Print #nF, "# Este archivo contiene las direcciones de los archivos del cliente, con sus respectivas versiones y sus respectivos md5" & vbCrLf
             Print #nF, "[INIT]"
-            Print #nF, "NumFiles=1"
-            Print #nF, "[File1] 'Argentum Client"
+            Print #nF, "NumFiles=1" & vbCrLf & vbCrLf
+            Print #nF, "[File1] 'Cliente"
             Print #nF, "Name=Argentum.exe"
             Print #nF, "Version=0"
-            Print #nF, "MD5="
+            Print #nF, "MD5=4a52d8025392734793235bdb4f3a54fa"
+            Print #nF, "Path=\"
+            Print #nF, "HasPatches=0"
+            Print #nF, "Comment=Cliente de Argentum Online, sin Alpha Blending"
         Close #nF
     End If
 End Sub
@@ -321,7 +327,8 @@ End Sub
 
 Public Sub ShellArgentum()
 On Error GoTo error
-    Shell App.Path & "\Argentum.exe /secure" 'We open Argentum.exe in normal way
+    Call ShellExecute(0, "OPEN", App.Path & "\Argentum.exe", ClientParams, App.Path, 0)   'We open Argentum.exe updated
+    End
     Exit Sub
 error:
     MsgBox "Error al ejecutar el juego", vbCritical
@@ -374,7 +381,7 @@ Sub AddtoRichTextBox(ByRef RichTextBox As RichTextBox, ByVal Text As String, Opt
 'apperance!
 'Pablo (ToxicWaste) 01/26/2007 : Now the list refeshes properly.
 'Juan Martín Sotuyo Dodero (Maraxus) 03/29/2007 : Replaced ToxicWaste's code for extra performance.
-'******************************************r
+'******************************************
     With RichTextBox
         If Len(.Text) > 1000 Then
             'Get rid of first line

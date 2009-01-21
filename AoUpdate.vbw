@@ -1,5 +1,5 @@
 clsIniReader = 72, 56, 1128, 648, 
-General = 136, 26, 1194, 730, Z
-mod_MD5 = 88, 116, 1288, 648, C
-frmDownload = 63, 70, 1053, 578, , 157, 86, 983, 594, C
-modCompression = 66, 87, 1266, 650, C
+General = 140, -1, 1198, 703, 
+mod_MD5 = 352, -1, 1552, 531, 
+frmDownload = 390, 189, 1380, 697, , 157, 86, 983, 594, C
+modCompression = 88, 116, 1266, 763, 
