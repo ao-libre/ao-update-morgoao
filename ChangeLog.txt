@@ -1,1 +1,3 @@
  - 02/10/2008 Inicio del Changelog
+ - 09/03/2009 Agregada la nueva interfaz (Marco)
+ - 09/03/2009 Prescindir del archivo de configuracion AoUpdate.ini local (Pato)
