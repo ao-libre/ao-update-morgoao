@@ -38,7 +38,7 @@ Public DownloadsPath As String
 Public AoUpdatePatches() As tAoUpdatePatches
 
 Public AoUpdateRemote() As tAoUpdateFile
-Public AoUpdateLocal() As tAoUpdateFile
+'Public AoUpdateLocal() As tAoUpdateFile
 Public DownloadQueue() As Long
 Public DownloadQueueIndex As Long
 Public PatchQueueIndex As Long
@@ -94,7 +94,7 @@ End Function
 ' @param localUpdateFile Specifies reference to Local Update File
 ' @param remoteUpdateFile Specifies reference to Remote Update File
 
-Public Sub CompareUpdateFiles(ByRef localUpdateFile() As tAoUpdateFile, ByRef remoteUpdateFile() As tAoUpdateFile)
+Public Sub CompareUpdateFiles(ByRef remoteUpdateFile() As tAoUpdateFile)
 '*************************************************
 'Author: Marco Vanotti (MarKoxX)
 'Last modified: 27/10/2008
@@ -109,32 +109,42 @@ Public Sub CompareUpdateFiles(ByRef localUpdateFile() As tAoUpdateFile, ByRef re
     tmpArrIndex = -1
     
     For i = 0 To UBound(remoteUpdateFile)
-        If i > UBound(localUpdateFile) Then
-            
-            ReDim Preserve DownloadQueue(tmpArrIndex + UBound(remoteUpdateFile) - UBound(localUpdateFile)) As Long
-            
-            j = i
-            While j <= UBound(remoteUpdateFile)
-                tmpArrIndex = tmpArrIndex + 1
-                
-                DownloadQueue(tmpArrIndex) = j
-                j = j + 1
-            Wend
-            
-            Exit Sub
-        End If
+        'If i > UBound(localUpdateFile) Then
+        '
+        '    ReDim Preserve DownloadQueue(tmpArrIndex + UBound(remoteUpdateFile) - UBound(localUpdateFile)) As Long
+        '
+        '    j = i
+        '    While j <= UBound(remoteUpdateFile)
+        '        tmpArrIndex = tmpArrIndex + 1
+        '
+        '        DownloadQueue(tmpArrIndex) = j
+        '        j = j + 1
+        '    Wend
+        '
+        '    Exit Sub
+        'End If
         
-        If remoteUpdateFile(i).name <> localUpdateFile(i).name Then
-            Call MsgBox("Error critico en los archivos ini. Por favor descargue el AoUpdater nuevamente.")
-        End If
+        'If remoteUpdateFile(i).name <> localUpdateFile(i).name Then
+        '    Call MsgBox("Error critico en los archivos ini. Por favor descargue el AoUpdater nuevamente.")
+        'End If
         
-        If remoteUpdateFile(i).version <> localUpdateFile(i).version Then
-            'Version Diffs, add to download queue.
+        'If remoteUpdateFile(i).version <> localUpdateFile(i).version Then
+        '    'Version Diffs, add to download queue.
+        '    tmpArrIndex = tmpArrIndex + 1
+        '    ReDim Preserve DownloadQueue(tmpArrIndex) As Long
+        '    DownloadQueue(tmpArrIndex) = i
+        'ElseIf remoteUpdateFile(i).md5 <> MD5File(App.Path & "\" & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name) Then
+        '    'File checksum diffs (corrupted file?), add to download queue.
+        '    tmpArrIndex = tmpArrIndex + 1
+        '    ReDim Preserve DownloadQueue(tmpArrIndex) As Long
+        '    DownloadQueue(tmpArrIndex) = i
+        'End If
+        
+        If Not FileExist(App.Path & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name, vbNormal) Then
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
             DownloadQueue(tmpArrIndex) = i
-        ElseIf remoteUpdateFile(i).md5 <> MD5File(App.Path & "\" & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name) Then
-            'File checksum diffs (corrupted file?), add to download queue.
+        ElseIf remoteUpdateFile(i).md5 <> MD5File(App.Path & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name) Then
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
             DownloadQueue(tmpArrIndex) = i
@@ -160,8 +170,8 @@ On Error GoTo noqueue
 
 On Error GoTo error
         ' Override local config file with remote one
-        Call Kill(App.Path & "\" & AOUPDATE_FILE)
-        Name DownloadsPath & "\" & AOUPDATE_FILE As App.Path & "\" & AOUPDATE_FILE
+        'Call Kill(App.Path & "\" & AOUPDATE_FILE)
+        'Name DownloadsPath & "\" & AOUPDATE_FILE As App.Path & "\" & AOUPDATE_FILE
         
         'Overwrite every file not already patched
         For DownloadQueueIndex = 0 To UBound(DownloadQueue)
@@ -203,7 +213,7 @@ On Error GoTo error
                     localVersion = GetVersion(App.Path & "\" & .Path & "\" & .name)
                 End If
                 
-                If ReadPatches(DownloadQueue(DownloadQueueIndex) + 1, localVersion, .version, App.Path & "\" & AOUPDATE_FILE) Then
+                If ReadPatches(DownloadQueue(DownloadQueueIndex) + 1, localVersion, .version, DownloadsPath & AOUPDATE_FILE) Then
                     'Reset index and download patches!
                     PatchQueueIndex = 0
                     Call frmDownload.DownloadPatch(AoUpdatePatches(PatchQueueIndex).name)
@@ -282,29 +292,29 @@ Private Sub CheckAoUpdateIntegrity()
     End If
     
     'Do we have a local AoUpdateFile ? If not, create it.
-    If Dir$(App.Path & "\" & AOUPDATE_FILE) = vbNullString Then
-        nF = FreeFile()
-        
-        Open App.Path & "\" & AOUPDATE_FILE For Output As #nF
-            Print #nF, "# Este archivo contiene las direcciones de los archivos del cliente, con sus respectivas versiones y sus respectivos md5" & vbCrLf
-            Print #nF, "[INIT]"
-            Print #nF, "NumFiles=1" & vbCrLf & vbCrLf
-            Print #nF, "[File1] 'Cliente"
-            Print #nF, "Name=Argentum.exe"
-            Print #nF, "Version=0"
-            Print #nF, "MD5=4a52d8025392734793235bdb4f3a54fa"
-            Print #nF, "Path=\"
-            Print #nF, "HasPatches=0"
-            Print #nF, "Comment=Cliente de Argentum Online, sin Alpha Blending"
-        Close #nF
-    End If
+    'If Dir$(App.Path & "\" & AOUPDATE_FILE) = vbNullString Then
+    '    nF = FreeFile()
+    '
+    '    Open App.Path & "\" & AOUPDATE_FILE For Output As #nF
+    '        Print #nF, "# Este archivo contiene las direcciones de los archivos del cliente, con sus respectivas versiones y sus respectivos md5" & vbCrLf
+    '        Print #nF, "[INIT]"
+    '        Print #nF, "NumFiles=1" & vbCrLf & vbCrLf
+    '        Print #nF, "[File1] 'Cliente"
+    '        Print #nF, "Name=Argentum.exe"
+    '        Print #nF, "Version=0"
+    '        Print #nF, "MD5=4a52d8025392734793235bdb4f3a54fa"
+    '        Print #nF, "Path=\"
+    '        Print #nF, "HasPatches=0"
+    '        Print #nF, "Comment=Cliente de Argentum Online, sin Alpha Blending"
+    '    Close #nF
+    'End If
 End Sub
 
 Public Sub ConfgFileDownloaded()
-    AoUpdateLocal = ReadAoUFile(App.Path & "\" & AOUPDATE_FILE) 'Load the local file
+    'AoUpdateLocal = ReadAoUFile(App.Path & "\" & AOUPDATE_FILE) 'Load the local file
     AoUpdateRemote = ReadAoUFile(DownloadsPath & AOUPDATE_FILE) 'Load the Remote file
     
-    Call CompareUpdateFiles(AoUpdateLocal, AoUpdateRemote) 'Compare local vs remote.
+    Call CompareUpdateFiles(AoUpdateRemote)  'Compare local vs remote.
     
     'Start downloads!
     Call NextDownload
