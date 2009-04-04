@@ -14,7 +14,7 @@ Option Explicit
 Public Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
 
 
-Public Const UPDATES_SITE As String = "http://www.argentuuum.com.ar/aoupdate/"
+Public Const UPDATES_SITE As String = "http://200.58.117.139/ao/autoupdate/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
 Public Const PARAM_UPDATED As String = "/uptodate"
 
@@ -177,18 +177,13 @@ On Error GoTo error
         For DownloadQueueIndex = 0 To UBound(DownloadQueue)
             With AoUpdateRemote(DownloadQueue(DownloadQueueIndex))
                 If Not .HasPatches Then
-                    If .name <> App.EXEName & ".exe" Then
-                        If Dir$(App.Path & "\" & .Path & "\" & .name) <> vbNullString Then
-                            Call Kill(App.Path & "\" & .Path & "\" & .name)
-                        End If
-                        
-                        If Not FileExist(App.Path & "\" & .Path, vbDirectory) Then MkDir (App.Path & "\" & .Path)
-                        
-                        Name DownloadsPath & .name As App.Path & "\" & .Path & "\" & .name
-                    Else
-                        'We are trying to patch AoUpdate.exe, so we need to give an extra argument to client
-                        ClientParams = "/patchao '" & App.EXEName & ".exe'"
+                    If Dir$(App.Path & "\" & .Path & "\" & .name) <> vbNullString Then
+                        Call Kill(App.Path & "\" & .Path & "\" & .name)
                     End If
+                        
+                    If Not FileExist(App.Path & "\" & .Path, vbDirectory) Then MkDir (App.Path & "\" & .Path)
+                        
+                    Name DownloadsPath & .name As App.Path & "\" & .Path & "\" & .name
                 End If
             End With
         Next DownloadQueueIndex
@@ -263,7 +258,7 @@ Public Sub PatchDownloaded()
     
     With AoUpdateRemote(DownloadQueue(DownloadQueueIndex - 1))
         'Apply downlaoded patch!
-#If SeguridadAlkon Then
+#If seguridadalkon Then
         Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", AoUpdatePatches(PatchQueueIndex).md5, frmDownload.pbDownload)
 #Else
         Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", frmDownload.pbDownload)
@@ -290,24 +285,6 @@ Private Sub CheckAoUpdateIntegrity()
     If Dir$(DownloadsPath, vbDirectory) = vbNullString Then
         Call MkDir(DownloadsPath)
     End If
-    
-    'Do we have a local AoUpdateFile ? If not, create it.
-    'If Dir$(App.Path & "\" & AOUPDATE_FILE) = vbNullString Then
-    '    nF = FreeFile()
-    '
-    '    Open App.Path & "\" & AOUPDATE_FILE For Output As #nF
-    '        Print #nF, "# Este archivo contiene las direcciones de los archivos del cliente, con sus respectivas versiones y sus respectivos md5" & vbCrLf
-    '        Print #nF, "[INIT]"
-    '        Print #nF, "NumFiles=1" & vbCrLf & vbCrLf
-    '        Print #nF, "[File1] 'Cliente"
-    '        Print #nF, "Name=Argentum.exe"
-    '        Print #nF, "Version=0"
-    '        Print #nF, "MD5=4a52d8025392734793235bdb4f3a54fa"
-    '        Print #nF, "Path=\"
-    '        Print #nF, "HasPatches=0"
-    '        Print #nF, "Comment=Cliente de Argentum Online, sin Alpha Blending"
-    '    Close #nF
-    'End If
 End Sub
 
 Public Sub ConfgFileDownloaded()
@@ -325,6 +302,16 @@ Public Sub Main()
     
     DownloadsPath = App.Path & "\TEMP\"
     frmDownload.filePath = DownloadsPath
+    'Nos fijamos si estamos ejecutando la copia del aoupdate o el original, si ejecutamos el orioginal lo copiamos y llamamos al otro con shellexecute!
+    
+    If UCase(App.EXEName) = "AOUPDATE" Then
+        'Nos copiamos..
+        FileCopy App.Path & "\" & App.EXEName & ".exe", App.Path & "\" & App.EXEName & "tmp" & ".exe"
+        Call ShellExecute(0, "OPEN", App.Path & "\" & App.EXEName & "tmp" & ".exe", "Patcher", App.Path, 0)    'We open AoUpdateTemp.exe updated
+        End
+    ElseIf Command = vbNullString Then End
+    
+    End If
     
     'Display form
     Call frmDownload.Show
