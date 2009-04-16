@@ -14,6 +14,8 @@ Option Explicit
 Public Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
 
 
+Public Caller As String
+Public NoExecute As Boolean
 Public Const UPDATES_SITE As String = "http://200.58.117.139/ao/autoupdate/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
 Public Const PARAM_UPDATED As String = "/uptodate"
@@ -193,7 +195,7 @@ On Error GoTo error
         Call AddtoRichTextBox(frmDownload.rtbDetalle, "Cliente de Argentum Online actualizado correctamente.", 255, 255, 255, True, False, False)
         frmDownload.cmdComenzar.Enabled = True
         
-        If frmDownload.chkJugar.value = 1 Then
+        If Not NoExecute Then
             Call ShellArgentum
         End If
         'End
@@ -241,7 +243,7 @@ noqueue: 'If we get here, it means that there isn't any update.
     
     ClientParams = PARAM_UPDATED & " " & ClientParams
     
-    If frmDownload.chkJugar.value = 1 Then
+    If Not NoExecute Then
         Call ShellArgentum
         End
     End If
@@ -307,10 +309,12 @@ Public Sub Main()
     If UCase(App.EXEName) = "AOUPDATE" Then
         'Nos copiamos..
         FileCopy App.Path & "\" & App.EXEName & ".exe", App.Path & "\" & App.EXEName & "tmp" & ".exe"
-        Call ShellExecute(0, "OPEN", App.Path & "\" & App.EXEName & "tmp" & ".exe", "Patcher", App.Path, 0)    'We open AoUpdateTemp.exe updated
+        Call ShellExecute(0, "OPEN", App.Path & "\" & App.EXEName & "tmp" & ".exe", "NoExecute", App.Path, 0)    'We open AoUpdateTemp.exe updated
         End
     ElseIf Command = vbNullString Then End
-    
+    Else
+        NoExecute = True
+        Calle = Command
     End If
     
     'Display form
@@ -324,7 +328,9 @@ End Sub
 
 Public Sub ShellArgentum()
 On Error GoTo error
-    Call ShellExecute(0, "OPEN", App.Path & "\Argentum.exe", ClientParams, App.Path, 0)   'We open Argentum.exe updated
+    If Not FileExist(App.Path & "\" & Caller) Then Caller = "Argentum.exe"
+    Call ShellExecute(0, "OPEN", App.Path & "\" & Caller, ClientParams, App.Path, 0)   'We open Argentum.exe updated
+    
     End
     Exit Sub
 error:

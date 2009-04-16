@@ -10,10 +10,11 @@ Begin VB.Form frmDownload
    ClientLeft      =   0
    ClientTop       =   0
    ClientWidth     =   8970
+   Icon            =   "frmDownload.frx":0000
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   Picture         =   "frmDownload.frx":0000
+   Picture         =   "frmDownload.frx":22262
    ScaleHeight     =   5940
    ScaleWidth      =   8970
    ShowInTaskbar   =   0   'False
@@ -34,31 +35,9 @@ Begin VB.Form frmDownload
       Height          =   375
       Left            =   9120
       Style           =   1  'Graphical
-      TabIndex        =   5
+      TabIndex        =   4
       Top             =   5040
       Width           =   1575
-   End
-   Begin VB.CheckBox chkJugar 
-      Appearance      =   0  'Flat
-      BackColor       =   &H80000005&
-      BeginProperty Font 
-         Name            =   "MS Sans Serif"
-         Size            =   9.75
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      ForeColor       =   &H80000008&
-      Height          =   375
-      Left            =   240
-      Picture         =   "frmDownload.frx":3E606
-      Style           =   1  'Graphical
-      TabIndex        =   4
-      Top             =   5430
-      Value           =   1  'Checked
-      Width           =   375
    End
    Begin RichTextLib.RichTextBox rtbDetalle 
       Height          =   2415
@@ -71,9 +50,10 @@ Begin VB.Form frmDownload
       _Version        =   393217
       BackColor       =   12632256
       BorderStyle     =   0
+      Enabled         =   -1  'True
       ReadOnly        =   -1  'True
       ScrollBars      =   2
-      TextRTF         =   $"frmDownload.frx":3E978
+      TextRTF         =   $"frmDownload.frx":60868
    End
    Begin MSComctlLib.ProgressBar pbDownload 
       Height          =   495
@@ -84,7 +64,7 @@ Begin VB.Form frmDownload
       _ExtentX        =   13150
       _ExtentY        =   873
       _Version        =   393216
-      Appearance      =   1
+      Appearance      =   0
    End
    Begin InetCtlsObjects.Inet iDownload 
       Left            =   120
@@ -93,17 +73,43 @@ Begin VB.Form frmDownload
       _ExtentY        =   1005
       _Version        =   393216
    End
+   Begin VB.Image imgCheck 
+      Height          =   360
+      Index           =   2
+      Left            =   240
+      Picture         =   "frmDownload.frx":608EB
+      Top             =   5470
+      Width           =   390
+   End
+   Begin VB.Image imgCheck 
+      Height          =   360
+      Index           =   1
+      Left            =   960
+      Picture         =   "frmDownload.frx":60C5D
+      Top             =   0
+      Visible         =   0   'False
+      Width           =   390
+   End
+   Begin VB.Image imgCheck 
+      Height          =   360
+      Index           =   0
+      Left            =   480
+      Picture         =   "frmDownload.frx":61053
+      Top             =   0
+      Visible         =   0   'False
+      Width           =   390
+   End
    Begin VB.Image cmdComenzar 
       Height          =   645
       Left            =   1080
-      Picture         =   "frmDownload.frx":3E9FB
+      Picture         =   "frmDownload.frx":613C5
       Top             =   4110
       Width           =   2700
    End
    Begin VB.Image imgExit 
       Height          =   645
       Left            =   1080
-      Picture         =   "frmDownload.frx":444F1
+      Picture         =   "frmDownload.frx":66EBB
       Top             =   4750
       Width           =   2700
    End
@@ -196,8 +202,13 @@ Public Sub DownloadFile(ByVal file As String)
     End If
 End Sub
 
+'Private Sub chkJugar_Click()
+'    NoExecute = chkJugar.value
+'End Sub
+
 Private Sub cmdComenzar_Click()
     Call ShellArgentum
+    End
 End Sub
 
 Private Sub cmdExit_Click()
@@ -205,8 +216,7 @@ Private Sub cmdExit_Click()
 End Sub
 
 Private Sub Form_Load()
-
-    chkJugar.value = vbChecked
+    imgCheck(2).Picture = imgCheck(IIf(NoExecute, 0, 1)).Picture
     cmdComenzar.Enabled = False
 End Sub
 
@@ -306,6 +316,11 @@ Public Function ReturnFileOrFolder(ByVal FullPath As String, _
                              Right$(FullPath, Len(FullPath) - intDelimiterIndex), _
                              Left$(FullPath, intDelimiterIndex))
 End Function
+
+Private Sub imgCheck_Click(Index As Integer)
+    NoExecute = Not NoExecute
+    imgCheck(Index).Picture = imgCheck(IIf(NoExecute, 0, 1)).Picture
+End Sub
 
 Private Sub imgExit_Click()
     End
