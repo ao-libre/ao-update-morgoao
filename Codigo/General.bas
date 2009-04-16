@@ -312,9 +312,11 @@ Public Sub Main()
         Call ShellExecute(0, "OPEN", App.Path & "\" & App.EXEName & "tmp" & ".exe", "NoExecute", App.Path, 0)    'We open AoUpdateTemp.exe updated
         End
     ElseIf Command = vbNullString Then End
-    Else
+    ElseIf Command = "NoExecute" Then
         NoExecute = True
-        Calle = Command
+        Caller = ""
+    Else
+        Caller = Command
     End If
     
     'Display form
@@ -328,7 +330,7 @@ End Sub
 
 Public Sub ShellArgentum()
 On Error GoTo error
-    If Not FileExist(App.Path & "\" & Caller) Then Caller = "Argentum.exe"
+    If Not FileExist(App.Path & "\" & Caller, vbArchive) Or Caller = "" Then Caller = "Argentum.exe"
     Call ShellExecute(0, "OPEN", App.Path & "\" & Caller, ClientParams, App.Path, 0)   'We open Argentum.exe updated
     
     End
