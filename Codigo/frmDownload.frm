@@ -17,7 +17,6 @@ Begin VB.Form frmDownload
    Picture         =   "frmDownload.frx":22262
    ScaleHeight     =   5940
    ScaleWidth      =   8970
-   ShowInTaskbar   =   0   'False
    StartUpPosition =   1  'CenterOwner
    Begin VB.CommandButton cmdExit 
       BackColor       =   &H00C0C0C0&
@@ -238,6 +237,8 @@ On Error GoTo error
             pbDownload.value = downloaded
             
             'Create the file.
+            'Si existe el archivo que queremos bajar, lo borramos
+            If FileExist(filePath & FileName, vbArchive) Then Kill filePath & FileName
             nF = FreeFile()
             
             Open filePath & FileName For Binary As nF
