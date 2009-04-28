@@ -11,6 +11,7 @@ Attribute VB_Name = "General"
 
 Option Explicit
 
+Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 Public Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
 
 
@@ -171,7 +172,7 @@ On Error GoTo noqueue
     If DownloadQueueIndex > UBound(DownloadQueue) Then
 
 On Error GoTo error
-        ' Override local config file with remote one
+        'Override local config file with remote one
         'Call Kill(App.Path & "\" & AOUPDATE_FILE)
         'Name DownloadsPath & "\" & AOUPDATE_FILE As App.Path & "\" & AOUPDATE_FILE
         
@@ -306,17 +307,31 @@ Public Sub Main()
     frmDownload.filePath = DownloadsPath
     'Nos fijamos si estamos ejecutando la copia del aoupdate o el original, si ejecutamos el orioginal lo copiamos y llamamos al otro con shellexecute!
     
-    If UCase(App.EXEName) = "AOUPDATE" Then
+    If UCase(App.EXEName) = "AOUPDATE" And Command = vbNullString Then
         'Nos copiamos..
+        On Error GoTo tmpInUse
+
+
         FileCopy App.Path & "\" & App.EXEName & ".exe", App.Path & "\" & App.EXEName & "tmp" & ".exe"
         Call ShellExecute(0, "OPEN", App.Path & "\" & App.EXEName & "tmp" & ".exe", "NoExecute", App.Path, 0)    'We open AoUpdateTemp.exe updated
         End
-    ElseIf Command = vbNullString Then End
-    ElseIf Command = "NoExecute" Then
-        NoExecute = True
-        Caller = ""
     Else
-        Caller = Command
+        Select Case Command
+            Case vbNullString
+                End
+            Case "NoExecute"
+                NoExecute = True
+                Caller = ""
+            Case "UpDated"
+                'Look & kill AoupdateTMP.exe
+                On Error GoTo error
+                               
+                If FileExist(App.Path & "\" & App.EXEName & "TMP" & ".exe", vbArchive) Then Kill App.Path & "\" & App.EXEName & "TMP" & ".exe"
+                
+                End
+            Case Else
+                Caller = Command
+        End Select
     End If
     
     'Display form
@@ -326,13 +341,29 @@ Public Sub Main()
     
     'Download the remote AoUpdate.ini to the TEMP folder and let the magic begin
     Call frmDownload.DownloadConfigFile
+    
+    Exit Sub
+tmpInUse:
+    MsgBox Err.Description & vbCrLf, vbInformation, "[ " & Err.Number & " ]" & " Error "
+    
+    Exit Sub
+error:
+    If Err.Number = 75 Or Err.Number = 70 Then 'Si el archivo AoUpdateTMP.exe está en uso, entonces esperamos 10 ms y volvemos a intentarlo hasta que nos deje.
+        Sleep 10
+        Resume
+    Else
+        MsgBox Err.Description & vbCrLf, vbInformation, "[ " & Err.Number & " ]" & " Error "
+        'MsgBox "Error al verificar las actualizaciones, vuelva a intentarlo", vbCritical
+        End
+    End If
+    
 End Sub
 
 Public Sub ShellArgentum()
 On Error GoTo error
+    If frmDownload.iDownload.StillExecuting Then Call frmDownload.iDownload.Cancel
     If Not FileExist(App.Path & "\" & Caller, vbArchive) Or Caller = "" Then Caller = "Argentum.exe"
     Call ShellExecute(0, "OPEN", App.Path & "\" & Caller, ClientParams, App.Path, 0)   'We open Argentum.exe updated
-    
     End
     Exit Sub
 error:

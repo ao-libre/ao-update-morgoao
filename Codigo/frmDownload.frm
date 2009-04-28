@@ -6,17 +6,17 @@ Begin VB.Form frmDownload
    BackColor       =   &H00E0E0E0&
    BorderStyle     =   0  'None
    Caption         =   "AoUpdate Downloader"
-   ClientHeight    =   5940
+   ClientHeight    =   5955
    ClientLeft      =   0
    ClientTop       =   0
-   ClientWidth     =   8970
+   ClientWidth     =   8955
    Icon            =   "frmDownload.frx":0000
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
    Picture         =   "frmDownload.frx":22262
-   ScaleHeight     =   5940
-   ScaleWidth      =   8970
+   ScaleHeight     =   5955
+   ScaleWidth      =   8955
    StartUpPosition =   1  'CenterOwner
    Begin VB.CommandButton cmdExit 
       BackColor       =   &H00C0C0C0&
@@ -211,6 +211,8 @@ Private Sub cmdComenzar_Click()
 End Sub
 
 Private Sub cmdExit_Click()
+    If iDownload.StillExecuting Then Call iDownload.Cancel
+    Call ShellExecute(0, "OPEN", App.Path & "\" & Left(App.EXEName, Len(App.EXEName) - 3) & ".exe", "UpDated", App.Path, 0) 'Ejecutamos el AoUpdate común para que borre el TMP
     End
 End Sub
 
@@ -318,11 +320,13 @@ Public Function ReturnFileOrFolder(ByVal FullPath As String, _
                              Left$(FullPath, intDelimiterIndex))
 End Function
 
-Private Sub imgCheck_Click(Index As Integer)
+Private Sub imgCheck_Click(index As Integer)
     NoExecute = Not NoExecute
-    imgCheck(Index).Picture = imgCheck(IIf(NoExecute, 0, 1)).Picture
+    imgCheck(index).Picture = imgCheck(IIf(NoExecute, 0, 1)).Picture
 End Sub
 
 Private Sub imgExit_Click()
+    If iDownload.StillExecuting Then Call iDownload.Cancel
+    Call ShellExecute(0, "OPEN", App.Path & "\" & Left(App.EXEName, Len(App.EXEName) - 3) & ".exe", "UpDated", App.Path, 0) 'Ejecutamos el AoUpdate común para que borre el TMP
     End
 End Sub
