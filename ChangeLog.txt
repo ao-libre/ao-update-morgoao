@@ -1,3 +1,4 @@
  - 02/10/2008 Inicio del Changelog
  - 09/03/2009 Agregada la nueva interfaz (Marco)
  - 09/03/2009 Prescindir del archivo de configuracion AoUpdate.ini local (Pato)
+ - 14/05/2009 Arreglado el bug del ShellExecute, ahora se le pasa SW_SHOWNORMAL como parametro (Marco)

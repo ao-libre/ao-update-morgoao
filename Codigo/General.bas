@@ -13,11 +13,11 @@ Option Explicit
 
 Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 Public Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
-
+Public Const SW_SHOWNORMAL As Long = 1
 
 Public Caller As String
 Public NoExecute As Boolean
-Public Const UPDATES_SITE As String = "http://200.58.117.139/ao/autoupdate/"
+Public Const UPDATES_SITE As String = "http://ao.alkon.com.ar/autoupdate/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
 Public Const PARAM_UPDATED As String = "/uptodate"
 
@@ -258,14 +258,20 @@ Public Sub PatchDownloaded()
     Dim localVersion As Long
     
     localVersion = -1
-    
+
+    Call AddtoRichTextBox(frmDownload.rtbDetalle, "Parcheando Archivo de recursos Ao puede demorar unos minutos..", 255, 255, 255, True, False, False)
     With AoUpdateRemote(DownloadQueue(DownloadQueueIndex - 1))
         'Apply downlaoded patch!
+            
 #If seguridadalkon Then
-        Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", AoUpdatePatches(PatchQueueIndex).md5, frmDownload.pbDownload)
+        If Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", UCase(AoUpdatePatches(PatchQueueIndex).md5), frmDownload.pbDownload) Then
 #Else
-        Call Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", frmDownload.pbDownload)
+        If Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", frmDownload.pbDownload) Then
 #End If
+            Call AddtoRichTextBox(frmDownload.rtbDetalle, "Archivo de recursos Ao parcheado correctamente", 255, 255, 255, True, False, False)
+        Else
+            Call AddtoRichTextBox(frmDownload.rtbDetalle, "No se pudo parchear el archivo de recursos Ao", 255, 255, 255, True, False, False)
+        End If
         'Delete patch after patching!
         Kill DownloadsPath & "\" & Right(AoUpdatePatches(PatchQueueIndex).name, Len(AoUpdatePatches(PatchQueueIndex).name) - InStrRev(AoUpdatePatches(PatchQueueIndex).name, "/"))
         
@@ -313,7 +319,7 @@ Public Sub Main()
 
 
         FileCopy App.Path & "\" & App.EXEName & ".exe", App.Path & "\" & App.EXEName & "tmp" & ".exe"
-        Call ShellExecute(0, "OPEN", App.Path & "\" & App.EXEName & "tmp" & ".exe", "NoExecute", App.Path, 0)    'We open AoUpdateTemp.exe updated
+        Call ShellExecute(0, "OPEN", App.Path & "\" & App.EXEName & "tmp" & ".exe", "NoExecute", App.Path, SW_SHOWNORMAL)    'We open AoUpdateTemp.exe updated
         End
     Else
         Select Case Command
@@ -363,7 +369,7 @@ Public Sub ShellArgentum()
 On Error GoTo error
     If frmDownload.iDownload.StillExecuting Then Call frmDownload.iDownload.Cancel
     If Not FileExist(App.Path & "\" & Caller, vbArchive) Or Caller = "" Then Caller = "Argentum.exe"
-    Call ShellExecute(0, "OPEN", App.Path & "\" & Caller, ClientParams, App.Path, 0)   'We open Argentum.exe updated
+    Call ShellExecute(0, "OPEN", App.Path & "\" & Caller, ClientParams, App.Path, SW_SHOWNORMAL)   'We open Argentum.exe updated
     End
     Exit Sub
 error:

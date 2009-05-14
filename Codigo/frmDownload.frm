@@ -1,6 +1,6 @@
 VERSION 5.00
 Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.ocx"
-Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
+Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.ocx"
 Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "RICHTX32.ocx"
 Begin VB.Form frmDownload 
    BackColor       =   &H00E0E0E0&
@@ -49,7 +49,6 @@ Begin VB.Form frmDownload
       _Version        =   393217
       BackColor       =   12632256
       BorderStyle     =   0
-      Enabled         =   -1  'True
       ReadOnly        =   -1  'True
       ScrollBars      =   2
       TextRTF         =   $"frmDownload.frx":60868
@@ -212,7 +211,6 @@ End Sub
 
 Private Sub cmdExit_Click()
     If iDownload.StillExecuting Then Call iDownload.Cancel
-    Call ShellExecute(0, "OPEN", App.Path & "\" & Left(App.EXEName, Len(App.EXEName) - 3) & ".exe", "UpDated", App.Path, 0) 'Ejecutamos el AoUpdate común para que borre el TMP
     End
 End Sub
 
@@ -327,6 +325,5 @@ End Sub
 
 Private Sub imgExit_Click()
     If iDownload.StillExecuting Then Call iDownload.Cancel
-    Call ShellExecute(0, "OPEN", App.Path & "\" & Left(App.EXEName, Len(App.EXEName) - 3) & ".exe", "UpDated", App.Path, 0) 'Ejecutamos el AoUpdate común para que borre el TMP
     End
 End Sub
