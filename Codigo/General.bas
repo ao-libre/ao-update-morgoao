@@ -308,6 +308,7 @@ End Sub
 
 Public Sub Main()
     Dim i As Long
+    Dim Pos As Byte
     
     DownloadsPath = App.Path & "\TEMP\"
     frmDownload.filePath = DownloadsPath
@@ -336,7 +337,9 @@ Public Sub Main()
                 
                 End
             Case Else
-                Caller = Command
+                Pos = InStr(1, Command, " ")
+                Caller = Left$(Command, Len(Command) - Pos)
+                ClientParams = mid$(Command, Pos + 1)
         End Select
     End If
     
