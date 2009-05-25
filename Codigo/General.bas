@@ -338,8 +338,12 @@ Public Sub Main()
                 End
             Case Else
                 Pos = InStr(1, Command, " ")
-                Caller = Left$(Command, Pos - 1)
-                ClientParams = Right$(Command, Len(Command) - Pos)
+                If Pos Then
+                    Caller = Left$(Command, Pos - 1)
+                    ClientParams = Right$(Command, Len(Command) - Pos)
+                Else
+                    Caller = Command
+                End If
         End Select
     End If
     
