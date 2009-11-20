@@ -1,7 +1,7 @@
 VERSION 5.00
-Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.ocx"
-Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.ocx"
-Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "RICHTX32.ocx"
+Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "msinet.ocx"
+Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
+Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "RICHTX32.OCX"
 Begin VB.Form frmDownload 
    BackColor       =   &H00E0E0E0&
    BorderStyle     =   0  'None
@@ -18,6 +18,12 @@ Begin VB.Form frmDownload
    ScaleHeight     =   5955
    ScaleWidth      =   8955
    StartUpPosition =   1  'CenterOwner
+   Begin VB.Timer TimerTimeOut 
+      Enabled         =   0   'False
+      Interval        =   30000
+      Left            =   4800
+      Top             =   3960
+   End
    Begin VB.CommandButton cmdExit 
       BackColor       =   &H00C0C0C0&
       Cancel          =   -1  'True
@@ -49,6 +55,7 @@ Begin VB.Form frmDownload
       _Version        =   393217
       BackColor       =   12632256
       BorderStyle     =   0
+      Enabled         =   -1  'True
       ReadOnly        =   -1  'True
       ScrollBars      =   2
       TextRTF         =   $"frmDownload.frx":60868
@@ -165,10 +172,18 @@ Private FileName As String
 Private downloadingConfig As Boolean
 Private downloadingPatch As Boolean
 
+Private WebTimeOut As Boolean
+
 Public Sub DownloadConfigFile()
     downloadingConfig = True
     
-    Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargando archivo de configuración.", 255, 255, 255, True, False, False)
+    If Not WebTimeOut Then
+        Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargando archivo de configuración.", 255, 255, 255, True, False, False)
+        UPDATES_SITE = UPDATE_URL
+    Else
+        Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargando archivo de configuración desde página alternativa.", 255, 255, 255, True, False, False)
+        UPDATES_SITE = UPDATE_URL_MIRROR
+    End If
     
     Call DownloadFile(AOUPDATE_FILE)
 End Sub
@@ -258,6 +273,8 @@ On Error GoTo error
             nF = -1
             
             Call DownloadComplete
+        Case icReceivingResponse
+            If downloadingConfig Then TimerTimeOut.Enabled = True
     End Select
 Exit Sub
 
@@ -326,4 +343,25 @@ End Sub
 Private Sub imgExit_Click()
     If iDownload.StillExecuting Then Call iDownload.Cancel
     End
+End Sub
+
+Private Sub TimerTimeOut_Timer()
+If pbDownload.value = 0 And downloadingConfig = True Then
+    If Not WebTimeOut Then
+        If iDownload.StillExecuting Then Call iDownload.Cancel
+        WebTimeOut = True
+        Downloading = False
+        
+        Call DownloadConfigFile
+    Else
+        If MsgBox("No se ha podido acceder a la web y por lo tanto su cliente puede estar desactualizado" & vbCrLf & "¿Desea correr el cliente de todas formas?", vbYesNo) = vbYes Then
+            Call ShellArgentum
+        Else
+            If iDownload.StillExecuting Then Call iDownload.Cancel
+            End
+        End If
+    End If
+End If
+
+TimerTimeOut.Enabled = False
 End Sub

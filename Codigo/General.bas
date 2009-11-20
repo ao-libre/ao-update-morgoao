@@ -17,7 +17,9 @@ Public Const SW_SHOWNORMAL As Long = 1
 
 Public Caller As String
 Public NoExecute As Boolean
-Public Const UPDATES_SITE As String = "http://ao.alkon.com.ar/autoupdate/"
+Public UPDATES_SITE As String
+Public Const UPDATE_URL As String = "http://ao.alkon.com.ar/autoupdate/"
+Public Const UPDATE_URL_MIRROR As String = "http://ao.alkon.com.ar/autoupdate/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
 Public Const PARAM_UPDATED As String = "/uptodate"
 
