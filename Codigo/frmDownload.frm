@@ -215,10 +215,6 @@ Public Sub DownloadFile(ByVal file As String)
     End If
 End Sub
 
-'Private Sub chkJugar_Click()
-'    NoExecute = chkJugar.value
-'End Sub
-
 Private Sub cmdComenzar_Click()
     Call ShellArgentum
     End
@@ -302,6 +298,21 @@ Private Sub DownloadComplete()
         
         Call PatchDownloaded
     Else
+        With AoUpdateRemote(DownloadQueue(DownloadQueueIndex - 1))
+            If Dir$(App.Path & "\" & .Path & "\" & .name) <> vbNullString Then
+                Call Kill(App.Path & "\" & .Path & "\" & .name)
+            End If
+                    
+            If Not FileExist(App.Path & "\" & .Path, vbDirectory) Then MkDir (App.Path & "\" & .Path)
+                
+            Name DownloadsPath & .name As App.Path & "\" & .Path & "\" & .name
+            
+            If .Critical Then
+                Call ShellExecute(0, "OPEN", App.Path & "\" & .Path & "\" & .name, Command, App.Path, SW_SHOWNORMAL)    'We open AoUpdate.exe updated
+                End
+            End If
+        End With
+        
         Call NextDownload
     End If
 End Sub
