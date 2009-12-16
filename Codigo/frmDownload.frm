@@ -20,7 +20,7 @@ Begin VB.Form frmDownload
    StartUpPosition =   1  'CenterOwner
    Begin VB.Timer TimerTimeOut 
       Enabled         =   0   'False
-      Interval        =   30000
+      Interval        =   10000
       Left            =   4800
       Top             =   3960
    End
@@ -55,7 +55,6 @@ Begin VB.Form frmDownload
       _Version        =   393217
       BackColor       =   12632256
       BorderStyle     =   0
-      Enabled         =   -1  'True
       ReadOnly        =   -1  'True
       ScrollBars      =   2
       TextRTF         =   $"frmDownload.frx":60868

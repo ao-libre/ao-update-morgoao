@@ -79,9 +79,9 @@ On Error GoTo error
         tmpAoUFile(i - 1).version = CInt(Leer.GetValue("File" & i, "Version"))
         tmpAoUFile(i - 1).md5 = Leer.GetValue("File" & i, "MD5")
         tmpAoUFile(i - 1).Path = Leer.GetValue("File" & i, "Path")
-        tmpAoUFile(i - 1).HasPatches = CBool(Leer.GetValue("File" & i, "HasPatches"))
+        tmpAoUFile(i - 1).HasPatches = CBool(Val(Leer.GetValue("File" & i, "HasPatches")))
         tmpAoUFile(i - 1).Comment = Leer.GetValue("File" & i, "Comment")
-        tmpAoUFile(i - 1).Critical = CBool(Leer.GetValue("File" & i, "Critical"))
+        tmpAoUFile(i - 1).Critical = CBool(Val(Leer.GetValue("File" & i, "Critical")))
     Next i
     
     ReadAoUFile = tmpAoUFile
