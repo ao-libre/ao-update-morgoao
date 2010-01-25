@@ -1,7 +1,7 @@
 VERSION 5.00
-Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "msinet.ocx"
-Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
-Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "RICHTX32.OCX"
+Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "mscomctl.ocx"
+Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "richtx32.ocx"
+Object = "{248DD890-BB45-11CF-9ABC-0080C7E7B78D}#1.0#0"; "MSWINSCK.ocx"
 Begin VB.Form frmDownload 
    BackColor       =   &H00E0E0E0&
    BorderStyle     =   0  'None
@@ -18,11 +18,18 @@ Begin VB.Form frmDownload
    ScaleHeight     =   5955
    ScaleWidth      =   8955
    StartUpPosition =   1  'CenterOwner
+   Begin MSWinsockLib.Winsock wskDownload 
+      Left            =   240
+      Top             =   4440
+      _ExtentX        =   741
+      _ExtentY        =   741
+      _Version        =   393216
+   End
    Begin VB.Timer TimerTimeOut 
       Enabled         =   0   'False
       Interval        =   10000
-      Left            =   4800
-      Top             =   3960
+      Left            =   240
+      Top             =   3000
    End
    Begin VB.CommandButton cmdExit 
       BackColor       =   &H00C0C0C0&
@@ -55,6 +62,7 @@ Begin VB.Form frmDownload
       _Version        =   393217
       BackColor       =   12632256
       BorderStyle     =   0
+      Enabled         =   -1  'True
       ReadOnly        =   -1  'True
       ScrollBars      =   2
       TextRTF         =   $"frmDownload.frx":60868
@@ -69,13 +77,6 @@ Begin VB.Form frmDownload
       _ExtentY        =   873
       _Version        =   393216
       Appearance      =   0
-   End
-   Begin InetCtlsObjects.Inet iDownload 
-      Left            =   120
-      Top             =   2520
-      _ExtentX        =   1005
-      _ExtentY        =   1005
-      _Version        =   393216
    End
    Begin VB.Image imgCheck 
       Height          =   360
@@ -162,6 +163,9 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
+Public WithEvents Download As CDownload
+Attribute Download.VB_VarHelpID = -1
+
 Public CurrentDownload As Byte
 Public filePath As String
 
@@ -172,6 +176,62 @@ Private downloadingConfig As Boolean
 Private downloadingPatch As Boolean
 
 Private WebTimeOut As Boolean
+
+Private Sub Download_Starting(ByVal FileSize As Long, ByVal Header As String)
+If FileSize <> 0 Then
+    pbDownload.max = FileSize
+End If
+pbDownload.value = 0
+End Sub
+
+Private Sub Download_DataArrival(ByVal bytesTotal As Long)
+'TODO: Cambiar la interface y permitir lblBytes y lblRate para darle más información al usuario.
+'lblBytes = Val(lblBytes) + bytesTotal
+If Download.FileSize <> 0 Then
+    pbDownload.value = pbDownload.value + bytesTotal
+    ' lblRate = Int(Val(lblBytes) * 100 / Download.FileSize) & "%"
+End If
+End Sub
+
+Private Sub Download_Completed()
+'lblRate = "100 %"
+pbDownload.max = 100
+pbDownload.value = 100
+
+'Termino la descarga, debemos seguir con la que sigue. Call NextDownload
+Downloading = False
+
+If downloadingConfig Then
+    downloadingConfig = False
+    Call ConfgFileDownloaded
+    
+ElseIf downloadingPatch Then
+    downloadingPatch = False
+    Call PatchDownloaded
+Else
+    With AoUpdateRemote(DownloadQueue(DownloadQueueIndex - 1))
+        If Dir$(App.Path & "\" & .Path & "\" & .name) <> vbNullString Then
+            Call Kill(App.Path & "\" & .Path & "\" & .name)
+        End If
+                
+        If Not FileExist(App.Path & "\" & .Path, vbDirectory) Then MkDir (App.Path & "\" & .Path)
+            
+        Name DownloadsPath & .name As App.Path & "\" & .Path & "\" & .name
+        
+        If .Critical Then
+            Call ShellExecute(0, "OPEN", App.Path & "\" & .Path & "\" & .name, Command, App.Path, SW_SHOWNORMAL)    'We open AoUpdate.exe updated
+            End
+        End If
+    End With
+    
+    Call NextDownload
+End If
+End Sub
+
+Private Sub Download_Error(ByVal Number As Integer, Description As String)
+    'Manejar el error que hubo.
+End Sub
+
 
 Public Sub DownloadConfigFile()
     downloadingConfig = True
@@ -201,14 +261,10 @@ Public Sub DownloadFile(ByVal file As String)
     If Not Downloading Then
         Downloading = True
         
-        With iDownload
-            .AccessType = icUseDefault
-            
-            'Indicamos que vamos a descargar o recuperar un archivo desde una url
-            Call .Execute(sURL, "GET")
-        End With
-        
         FileName = ReturnFileOrFolder(sURL, True, True)
+        If FileExist(filePath & FileName, vbArchive) Then Kill filePath & FileName
+        
+        Me.Download.Download sURL, filePath & FileName
         
         lblDownloadPath.Caption = FileName
     End If
@@ -220,100 +276,13 @@ Private Sub cmdComenzar_Click()
 End Sub
 
 Private Sub cmdExit_Click()
-    If iDownload.StillExecuting Then Call iDownload.Cancel
     End
 End Sub
 
 Private Sub Form_Load()
+    Set Download = New CDownload
     imgCheck(2).Picture = imgCheck(IIf(NoExecute, 0, 1)).Picture
     cmdComenzar.Enabled = False
-End Sub
-
-Private Sub iDownload_StateChanged(ByVal State As Integer)
-    Dim nF As Integer
-    Dim tmpArr() As Byte
-    Dim fileSize As Long
-    Dim downloaded As Long
-    
-On Error GoTo error
-    nF = -1
-    
-    Select Case State
-        Case icResponseCompleted
-            fileSize = iDownload.GetHeader("Content-Length")
-            downloaded = 0
-            
-            pbDownload.max = fileSize
-            pbDownload.value = downloaded
-            
-            'Create the file.
-            'Si existe el archivo que queremos bajar, lo borramos
-            If FileExist(filePath & FileName, vbArchive) Then Kill filePath & FileName
-            nF = FreeFile()
-            
-            Open filePath & FileName For Binary As nF
-                While fileSize <> downloaded
-                    tmpArr = iDownload.GetChunk(1024, icByteArray)
-                    
-                    Put nF, , tmpArr
-                    
-                    downloaded = downloaded + UBound(tmpArr) + 1
-                    pbDownload.value = downloaded
-                    
-                    DoEvents
-                Wend
-            Close nF
-            
-            'Reset nF
-            nF = -1
-            
-            Call DownloadComplete
-        Case icReceivingResponse
-            If downloadingConfig Then TimerTimeOut.Enabled = True
-    End Select
-Exit Sub
-
-error:
-    Call MsgBox(Err.Description, vbCritical, Err.Number)
-    
-On Error Resume Next
-    If nF <> -1 Then
-        Close nF
-    End If
-    
-    iDownload.Cancel
-    pbDownload.value = 0
-End Sub
-
-Private Sub DownloadComplete()
-    Downloading = False
-    
-    If downloadingConfig Then
-        downloadingConfig = False
-        
-        Call ConfgFileDownloaded
-    ElseIf downloadingPatch Then
-        downloadingPatch = False
-        
-        Call PatchDownloaded
-    Else
-        With AoUpdateRemote(DownloadQueue(DownloadQueueIndex - 1))
-            If Dir$(App.Path & "\" & .Path & "\" & .name) <> vbNullString Then
-                Call Kill(App.Path & "\" & .Path & "\" & .name)
-            End If
-                    
-            If Not FileExist(App.Path & "\" & .Path, vbDirectory) Then MkDir (App.Path & "\" & .Path)
-                
-            Name DownloadsPath & .name As App.Path & "\" & .Path & "\" & .name
-            
-            If .Critical Then
-                Call ShellExecute(0, "OPEN", App.Path & "\" & .Path & "\" & .name, Command, App.Path, SW_SHOWNORMAL)    'We open AoUpdate.exe updated
-                End
-            End If
-        End With
-        
-        Call NextDownload
-    End If
 End Sub
 
 Public Function ReturnFileOrFolder(ByVal FullPath As String, _
@@ -351,14 +320,15 @@ Private Sub imgCheck_Click(index As Integer)
 End Sub
 
 Private Sub imgExit_Click()
-    If iDownload.StillExecuting Then Call iDownload.Cancel
+    Call Download.Cancel
     End
 End Sub
 
+
 Private Sub TimerTimeOut_Timer()
-If pbDownload.value = 0 And downloadingConfig = True Then
+If downloadingConfig = True Then
     If Not WebTimeOut Then
-        If iDownload.StillExecuting Then Call iDownload.Cancel
+        Download.Cancel
         WebTimeOut = True
         Downloading = False
         
@@ -367,7 +337,7 @@ If pbDownload.value = 0 And downloadingConfig = True Then
         If MsgBox("No se ha podido acceder a la web y por lo tanto su cliente puede estar desactualizado" & vbCrLf & "¿Desea correr el cliente de todas formas?", vbYesNo) = vbYes Then
             Call ShellArgentum
         Else
-            If iDownload.StillExecuting Then Call iDownload.Cancel
+            Download.Cancel
             End
         End If
     End If
@@ -375,3 +345,4 @@ End If
 
 TimerTimeOut.Enabled = False
 End Sub
+

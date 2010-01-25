@@ -1,9 +1,7 @@
 Attribute VB_Name = "General"
 ''
-' Module description.
-' Can be more than one line.
+'  This module has the general functions and routines of the Argentum Online Auto Updater
 '
-' @remarks
 ' @author Marco Vanotti (marco@vanotti.com.ar)
 ' @version 0.0.1
 ' @date 20081005
@@ -18,8 +16,8 @@ Public Const SW_SHOWNORMAL As Long = 1
 Public Caller As String
 Public NoExecute As Boolean
 Public UPDATES_SITE As String
-Public Const UPDATE_URL As String = "http://ao.alkon.com.ar/autoupdate/"
-Public Const UPDATE_URL_MIRROR As String = "http://ao.alkon.com.ar/autoupdate/"
+Public Const UPDATE_URL As String = "http://aotest.argentuuum.com.ar/Aoupdate/"
+Public Const UPDATE_URL_MIRROR As String = "http://aoupdate.argentuuum.com.ar/updates/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
 Public Const PARAM_UPDATED As String = "/uptodate"
 
@@ -27,7 +25,7 @@ Public Const PARAM_UPDATED As String = "/uptodate"
 Public Type tAoUpdateFile
     name As String              'File name
     version As Integer          'The version of the file
-    md5 As String * 32          'It's checksum
+    MD5 As String * 32          'It's checksum
     Path As String              'Path in the client to the file from App.Path (the server path is the same, changing '\' with '/')
     HasPatches As Boolean       'Weather if patches are available for this file or not (if not the complete file has to be downloaded)
     Comment As String           'Any comments regarding this file.
@@ -36,7 +34,7 @@ End Type
 
 Public Type tAoUpdatePatches
     name As String          'its location in the server
-    md5 As String * 32      'It's Checksum
+    MD5 As String * 32      'It's Checksum
 End Type
 
 Public DownloadsPath As String
@@ -66,7 +64,7 @@ Public Function ReadAoUFile(ByVal file As String) As tAoUpdateFile()
     Dim tmpAoUFile() As tAoUpdateFile
     Dim i As Integer
     
-On Error GoTo error
+On Error GoTo Error
     
     Call Leer.Initialize(file)
     
@@ -77,7 +75,7 @@ On Error GoTo error
     For i = 1 To NumFiles
         tmpAoUFile(i - 1).name = Leer.GetValue("File" & i, "Name")
         tmpAoUFile(i - 1).version = CInt(Leer.GetValue("File" & i, "Version"))
-        tmpAoUFile(i - 1).md5 = Leer.GetValue("File" & i, "MD5")
+        tmpAoUFile(i - 1).MD5 = Leer.GetValue("File" & i, "MD5")
         tmpAoUFile(i - 1).Path = Leer.GetValue("File" & i, "Path")
         tmpAoUFile(i - 1).HasPatches = CBool(Val(Leer.GetValue("File" & i, "HasPatches")))
         tmpAoUFile(i - 1).Comment = Leer.GetValue("File" & i, "Comment")
@@ -89,7 +87,7 @@ On Error GoTo error
     Set Leer = Nothing
 Exit Function
 
-error:
+Error:
     Call MsgBox(Err.Description, vbCritical, Err.Number)
     Set Leer = Nothing
 End Function
@@ -119,7 +117,7 @@ Public Sub CompareUpdateFiles(ByRef remoteUpdateFile() As tAoUpdateFile)
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
             DownloadQueue(tmpArrIndex) = i
-        ElseIf remoteUpdateFile(i).md5 <> MD5File(App.Path & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name) Then
+        ElseIf remoteUpdateFile(i).MD5 <> MD5File(App.Path & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name) Then
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
             DownloadQueue(tmpArrIndex) = i
@@ -143,7 +141,7 @@ On Error GoTo noqueue
     
     If DownloadQueueIndex > UBound(DownloadQueue) Then
 
-On Error GoTo error
+On Error GoTo Error
         ClientParams = PARAM_UPDATED & " " & ClientParams
         Call AddtoRichTextBox(frmDownload.rtbDetalle, "Cliente de Argentum Online actualizado correctamente.", 255, 255, 255, True, False, False)
         frmDownload.cmdComenzar.Enabled = True
@@ -202,7 +200,7 @@ noqueue: 'If we get here, it means that there isn't any update.
     End If
 Exit Sub
 
-error:
+Error:
     Call MsgBox(Err.Description, vbCritical, Err.Number)
 End Sub
 
@@ -216,7 +214,7 @@ Public Sub PatchDownloaded()
         'Apply downlaoded patch!
             
 #If seguridadalkon Then
-        If Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", UCase(AoUpdatePatches(PatchQueueIndex).md5), frmDownload.pbDownload) Then
+        If Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", UCase(AoUpdatePatches(PatchQueueIndex).MD5), frmDownload.pbDownload) Then
 #Else
         If Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", frmDownload.pbDownload) Then
 #End If
@@ -263,26 +261,28 @@ Public Sub Main()
     
     DownloadsPath = App.Path & "\TEMP\"
     frmDownload.filePath = DownloadsPath
-    'Nos fijamos si estamos ejecutando la copia del aoupdate o el original, si ejecutamos el orioginal lo copiamos y llamamos al otro con shellexecute!
     
+    
+    'Nos fijamos si estamos ejecutando la copia del aoupdate o el original, si ejecutamos el original lo copiamos y llamamos al otro con shellexecute
     If UCase(App.EXEName) = "AOUPDATE" And Command = vbNullString Then
         'Nos copiamos..
         On Error GoTo tmpInUse
-
-
+        
         FileCopy App.Path & "\" & App.EXEName & ".exe", App.Path & "\" & App.EXEName & "tmp" & ".exe"
         Call ShellExecute(0, "OPEN", App.Path & "\" & App.EXEName & "tmp" & ".exe", "NoExecute", App.Path, SW_SHOWNORMAL)    'We open AoUpdateTemp.exe updated
+        
         End
     Else
-        Select Case Command
+    
+        Select Case Command 'Si estamos ejecutando AoUpdateTMP leemos la linea de comandos
             Case vbNullString
                 End
-            Case "NoExecute"
+            Case "NoExecute"    'El AoUpdateComun nos pasa por parametro que no tenemos que ejecutar automaticamente el Ao al finalizar.
                 NoExecute = True
                 Caller = ""
             Case "UpDated"
                 'Look & kill AoupdateTMP.exe
-                On Error GoTo error
+                On Error GoTo Error
                                
                 If FileExist(App.Path & "\" & App.EXEName & "TMP" & ".exe", vbArchive) Then Kill App.Path & "\" & App.EXEName & "TMP" & ".exe"
                 
@@ -311,7 +311,7 @@ tmpInUse:
     MsgBox Err.Description & vbCrLf, vbInformation, "[ " & Err.Number & " ]" & " Error "
     
     Exit Sub
-error:
+Error:
     If Err.Number = 75 Or Err.Number = 70 Then 'Si el archivo AoUpdateTMP.exe está en uso, entonces esperamos 10 ms y volvemos a intentarlo hasta que nos deje.
         Sleep 10
         Resume
@@ -324,13 +324,15 @@ error:
 End Sub
 
 Public Sub ShellArgentum()
-On Error GoTo error
-    If frmDownload.iDownload.StillExecuting Then Call frmDownload.iDownload.Cancel
+On Error GoTo Error
+    
+    Call frmDownload.Download.Cancel
+    
     If Not FileExist(App.Path & "\" & Caller, vbArchive) Or Caller = "" Then Caller = "Argentum.exe"
     Call ShellExecute(0, "OPEN", App.Path & "\" & Caller, ClientParams, App.Path, SW_SHOWNORMAL)   'We open Argentum.exe updated
     End
     Exit Sub
-error:
+Error:
     MsgBox "Error al ejecutar el juego", vbCritical
 End Sub
 
@@ -344,7 +346,7 @@ End Function
 ' @param NumFile Specifies reference to File in AoUpdateFile file.
 ' @param begininVersion Specifies reference to LocalVersion
 ' @param endingVersion Specifies reference to last version of the file
-' @param sFile specifies reference to ConfiFile to read data from.
+' @param sFile specifies reference to ConfigFile to read data from.
 '
 ' @returns True if the file can be patcheable or false if the file can't be patcheable
 
@@ -369,7 +371,7 @@ Private Function ReadPatches(ByVal numFile As Integer, ByVal beginingVersion As 
     
     For i = beginingVersion To endingVersion - 1
         AoUpdatePatches(i - beginingVersion).name = Leer.GetValue("PATCHES" & numFile & "-" & i, "name")
-        AoUpdatePatches(i - beginingVersion).md5 = Leer.GetValue("PATCHES" & numFile & "-" & i, "md5")
+        AoUpdatePatches(i - beginingVersion).MD5 = Leer.GetValue("PATCHES" & numFile & "-" & i, "md5")
     Next i
 End Function
 

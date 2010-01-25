@@ -21,7 +21,7 @@ Public Type INFOHEADER
     strFileName As String * 16      'What's the name of the file this data came from?
     lngFileSizeUncompressed As Long 'How big is the file compressed
     
-#If SeguridadAlkon Then
+#If seguridadalkon Then
     lngCheckSum As Long
 #End If
 End Type
@@ -208,7 +208,7 @@ On Local Error GoTo ErrHandler
     'Set InfoHeader we are looking for
     InfoHead.strFileName = UCase$(FileName)
     
-#If SeguridadAlkon Then
+#If seguridadalkon Then
     Call Secure_Info_Header(InfoHead)
 #End If
     
@@ -218,7 +218,7 @@ On Local Error GoTo ErrHandler
         'Extract the FILEHEADER
         Get ResourceFile, 1, FileHead
         
-#If SeguridadAlkon Then
+#If seguridadalkon Then
         Call Secure_File_Header(FileHead)
 #End If
         
@@ -231,7 +231,7 @@ On Local Error GoTo ErrHandler
         
         'Search for it!
         If BinarySearch(ResourceFile, InfoHead, 1, FileHead.lngNumFiles, Len(FileHead), Len(InfoHead)) Then
-#If SeguridadAlkon Then
+#If seguridadalkon Then
             Call Secure_Info_Header(InfoHead)
 #End If
             
@@ -281,7 +281,7 @@ Private Sub Compress_Data(ByRef data() As Byte)
     
     Erase BufTemp
     
-#If SeguridadAlkon Then
+#If seguridadalkon Then
     Call Secure_Compressed_Data(data)
 #End If
 End Sub
@@ -302,7 +302,7 @@ Private Sub Decompress_Data(ByRef data() As Byte, ByVal OrigSize As Long)
     
     ReDim BufTemp(OrigSize - 1)
     
-#If SeguridadAlkon Then
+#If seguridadalkon Then
     Call Secure_Compressed_Data(data)
 #End If
     
@@ -351,7 +351,7 @@ On Local Error GoTo ErrHandler
         ReDim Preserve InfoHead(FileHead.lngNumFiles - 1)
         InfoHead(FileHead.lngNumFiles - 1).strFileName = UCase$(SourceFileName)
         
-#If SeguridadAlkon Then
+#If seguridadalkon Then
         'We want the list ordered considering encryption
         Call Secure_Info_Header(InfoHead(FileHead.lngNumFiles - 1))
 #End If
@@ -367,7 +367,7 @@ On Local Error GoTo ErrHandler
     
     If Not prgBar Is Nothing Then
         prgBar.max = FileHead.lngNumFiles
-        prgBar.Value = 0
+        prgBar.value = 0
     End If
     
     'Destroy file if it previuosly existed
@@ -391,7 +391,7 @@ On Local Error GoTo ErrHandler
         ' Process every file!
         For loopc = 0 To FileHead.lngNumFiles - 1
             
-#If SeguridadAlkon Then
+#If seguridadalkon Then
             Call Secure_Info_Header(InfoHead(loopc))
 #End If
             
@@ -420,7 +420,7 @@ On Local Error GoTo ErrHandler
                     FileHead.lngFileSize = FileHead.lngFileSize + .lngFileSize
                 End With
                 
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                 Call Secure_Info_Header(InfoHead(loopc))
 #End If
                 
@@ -429,11 +429,11 @@ On Local Error GoTo ErrHandler
             Close SourceFile
         
             'Update progress bar
-            If Not prgBar Is Nothing Then prgBar.Value = prgBar.Value + 1
+            If Not prgBar Is Nothing Then prgBar.value = prgBar.value + 1
             DoEvents
         Next loopc
         
-#If SeguridadAlkon Then
+#If seguridadalkon Then
         Call Secure_File_Header(FileHead)
 #End If
         
@@ -567,7 +567,7 @@ On Local Error GoTo ErrHandler
         'Extract the FILEHEADER
         Get ResourceFile, 1, FileHead
         
-#If SeguridadAlkon Then
+#If seguridadalkon Then
         Call Secure_File_Header(FileHead)
 #End If
         
@@ -586,7 +586,7 @@ On Local Error GoTo ErrHandler
         
         'Check if there is enough hard drive space to extract all files
         For loopc = 0 To UBound(InfoHead)
-#If SeguridadAlkon Then
+#If seguridadalkon Then
             Call Secure_Info_Header(InfoHead(loopc))
 #End If
             
@@ -604,7 +604,7 @@ On Local Error GoTo ErrHandler
     'Update progress bar
     If Not prgBar Is Nothing Then
         prgBar.max = FileHead.lngNumFiles
-        prgBar.Value = 0
+        prgBar.value = 0
     End If
     
     'Extract all of the files from the binary file
@@ -632,7 +632,7 @@ On Local Error GoTo ErrHandler
         End If
             
         'Update progress bar
-        If Not prgBar Is Nothing Then prgBar.Value = prgBar.Value + 1
+        If Not prgBar Is Nothing Then prgBar.value = prgBar.value + 1
         DoEvents
     Next loopc
     
@@ -822,12 +822,12 @@ On Error Resume Next
     Open ResourcePath & GRH_RESOURCE_FILE For Binary Access Read Lock Write As ResourceFile
     Get ResourceFile, 1, FileHead
     
-#If SeguridadAlkon Then
+#If seguridadalkon Then
     Call Secure_File_Header(FileHead)
 #End If
     
     If ReadNext_InfoHead(ResourceFile, FileHead, InfoHead, ReadFiles) Then
-#If SeguridadAlkon Then
+#If seguridadalkon Then
         Call Secure_Info_Header(InfoHead)
 #End If
         
@@ -891,7 +891,7 @@ Public Function Make_Patch(ByRef NewResourcePath As String, ByRef OldResourcePat
         'Get the old FileHeader
         Get OldResourceFile, 1, OldFileHead
         
-#If SeguridadAlkon Then
+#If seguridadalkon Then
         Call Secure_File_Header(OldFileHead)
 #End If
         
@@ -909,7 +909,7 @@ Public Function Make_Patch(ByRef NewResourcePath As String, ByRef OldResourcePat
             'Get the new FileHeader
             Get NewResourceFile, 1, NewFileHead
             
-#If SeguridadAlkon Then
+#If seguridadalkon Then
             Call Secure_File_Header(NewFileHead)
 #End If
             
@@ -930,20 +930,20 @@ Public Function Make_Patch(ByRef NewResourcePath As String, ByRef OldResourcePat
                 
                 If Not prgBar Is Nothing Then
                     prgBar.max = OldFileHead.lngNumFiles + NewFileHead.lngNumFiles
-                    prgBar.Value = 0
+                    prgBar.value = 0
                 End If
                 
                 'put previous file version (unencrypted)
                 Put OutputFile, , OldFileHead.lngFileVersion
                 
                 'Put the new file header
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                 Call Secure_File_Header(NewFileHead)
 #End If
 
                 Put OutputFile, , NewFileHead
                 
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                 Call Secure_File_Header(NewFileHead)
 #End If
                 
@@ -952,13 +952,13 @@ Public Function Make_Patch(ByRef NewResourcePath As String, ByRef OldResourcePat
                   And ReadNext_InfoHead(NewResourceFile, NewFileHead, NewInfoHead, NewReadFiles) Then
                     
                     'Update
-                    prgBar.Value = prgBar.Value + 2
+                    prgBar.value = prgBar.value + 2
                     
                     Do 'Main loop
                         'Comparisons are between encrypted names, for ordering issues
                         If OldInfoHead.strFileName = NewInfoHead.strFileName Then
                         
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                             Call Secure_Info_Header(OldInfoHead)
                             Call Secure_Info_Header(NewInfoHead)
 #End If
@@ -975,7 +975,7 @@ Public Function Make_Patch(ByRef NewResourcePath As String, ByRef OldResourcePat
                                 Put OutputFile, , Instruction
                                 
                                 'Write header
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                                 Call Secure_Info_Header(NewInfoHead)
 #End If
                                 Put OutputFile, , NewInfoHead
@@ -997,7 +997,7 @@ Public Function Make_Patch(ByRef NewResourcePath As String, ByRef OldResourcePat
                             End If
                             
                             'Update
-                            If Not prgBar Is Nothing Then prgBar.Value = prgBar.Value + 2
+                            If Not prgBar Is Nothing Then prgBar.value = prgBar.value + 2
                         
                         ElseIf OldInfoHead.strFileName < NewInfoHead.strFileName Then
                             
@@ -1014,7 +1014,7 @@ Public Function Make_Patch(ByRef NewResourcePath As String, ByRef OldResourcePat
                             End If
                             
                             'Update
-                            If Not prgBar Is Nothing Then prgBar.Value = prgBar.Value + 1
+                            If Not prgBar Is Nothing Then prgBar.value = prgBar.value + 1
                         
                         Else
                             
@@ -1023,7 +1023,7 @@ Public Function Make_Patch(ByRef NewResourcePath As String, ByRef OldResourcePat
                             Put OutputFile, , Instruction
                             Put OutputFile, , NewInfoHead
                             
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                             Call Secure_Info_Header(NewInfoHead)
 #End If
                             
@@ -1041,7 +1041,7 @@ Public Function Make_Patch(ByRef NewResourcePath As String, ByRef OldResourcePat
                             End If
                             
                             'Update
-                            If Not prgBar Is Nothing Then prgBar.Value = prgBar.Value + 1
+                            If Not prgBar Is Nothing Then prgBar.value = prgBar.value + 1
                         End If
                         
                         DoEvents
@@ -1061,7 +1061,7 @@ Public Function Make_Patch(ByRef NewResourcePath As String, ByRef OldResourcePat
                     Put OutputFile, , OldInfoHead
                     
                     'Update
-                    If Not prgBar Is Nothing Then prgBar.Value = prgBar.Value + 1
+                    If Not prgBar Is Nothing Then prgBar.value = prgBar.value + 1
                     DoEvents
                 Wend
                 
@@ -1073,7 +1073,7 @@ Public Function Make_Patch(ByRef NewResourcePath As String, ByRef OldResourcePat
                     Put OutputFile, , NewInfoHead
                     
                     'Get file data
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                     Call Secure_Info_Header(NewInfoHead)
 #End If
                     Call Get_File_RawData(NewResourcePath, NewInfoHead, data)
@@ -1081,7 +1081,7 @@ Public Function Make_Patch(ByRef NewResourcePath As String, ByRef OldResourcePat
                     Put OutputFile, , data
                     
                     'Update
-                    If Not prgBar Is Nothing Then prgBar.Value = prgBar.Value + 1
+                    If Not prgBar Is Nothing Then prgBar.value = prgBar.value + 1
                     DoEvents
                 Wend
             
@@ -1113,7 +1113,7 @@ End Function
 ' @param    PrgBar The control that shows the process state.
 '
 ' @return   True if no error occurred.
-#If SeguridadAlkon Then
+#If seguridadalkon Then
 Public Function Apply_Patch(ByRef ResourcePath As String, ByRef PatchPath As String, ByVal CheckSum As String, ByRef prgBar As ProgressBar) As Boolean
 #Else
 Public Function Apply_Patch(ByRef ResourcePath As String, ByRef PatchPath As String, ByRef prgBar As ProgressBar) As Boolean
@@ -1155,7 +1155,7 @@ On Local Error GoTo ErrHandler
         
         'Read the old FileHeader
         Get ResourceFile, , FileHead
-#If SeguridadAlkon Then
+#If seguridadalkon Then
         Call Secure_File_Header(FileHead)
 #End If
         
@@ -1193,13 +1193,13 @@ On Local Error GoTo ErrHandler
                 
                 'Save the file header
                 Put OutputFile, , PatchFileHead
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                 Call Secure_File_Header(PatchFileHead)
 #End If
                 
                 If Not prgBar Is Nothing Then
                     prgBar.max = PatchFileHead.lngNumFiles
-                    prgBar.Value = 0
+                    prgBar.value = 0
                 End If
                 
                 'Update
@@ -1219,7 +1219,7 @@ On Local Error GoTo ErrHandler
                         'Comparison is performed among encrypted names for ordering issues
                         If Not EOResource And InfoHead.strFileName < PatchInfoHead.strFileName Then
                             
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                             Call Secure_Info_Header(InfoHead)
 #End If
 
@@ -1227,7 +1227,7 @@ On Local Error GoTo ErrHandler
                             Call Get_File_RawData(ResourcePath, InfoHead, data)
                             InfoHead.lngFileStart = DataOutputPos
                             
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                             Call Secure_Info_Header(InfoHead)
 #End If
                             
@@ -1238,7 +1238,7 @@ On Local Error GoTo ErrHandler
                             'Update
                             DataOutputPos = DataOutputPos + UBound(data) + 1
                             WrittenFiles = WrittenFiles + 1
-                            If Not prgBar Is Nothing Then prgBar.Value = WrittenFiles
+                            If Not prgBar Is Nothing Then prgBar.value = WrittenFiles
                         Else
                             Exit Do
                         End If
@@ -1256,7 +1256,7 @@ On Local Error GoTo ErrHandler
                         Case PatchInstruction.Create_File
                             If (InfoHead.strFileName > PatchInfoHead.strFileName) Or EOResource Then
                                 
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                                 Call Secure_Info_Header(PatchInfoHead)
 #End If
 
@@ -1264,7 +1264,7 @@ On Local Error GoTo ErrHandler
                                 ReDim data(PatchInfoHead.lngFileSize - 1)
                                 Get PatchFile, , data
                                 
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                                 Call Secure_Info_Header(PatchInfoHead)
 #End If
                                 
@@ -1279,7 +1279,7 @@ On Local Error GoTo ErrHandler
                                 'Update
                                 DataOutputPos = DataOutputPos + UBound(data) + 1
                                 WrittenFiles = WrittenFiles + 1
-                                If Not prgBar Is Nothing Then prgBar.Value = WrittenFiles
+                                If Not prgBar Is Nothing Then prgBar.value = WrittenFiles
                             Else
                                 Err.Description = "Incongruencia en archivos de recurso"
                                 GoTo ErrHandler
@@ -1289,7 +1289,7 @@ On Local Error GoTo ErrHandler
                         Case PatchInstruction.Modify_File
                             If InfoHead.strFileName = PatchInfoHead.strFileName Then
                             
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                                 Call Secure_Info_Header(PatchInfoHead)
 #End If
 
@@ -1297,7 +1297,7 @@ On Local Error GoTo ErrHandler
                                 ReDim data(PatchInfoHead.lngFileSize - 1)
                                 Get PatchFile, , data
                                 
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                                 Call Secure_Info_Header(PatchInfoHead)
 #End If
                                 
@@ -1308,7 +1308,7 @@ On Local Error GoTo ErrHandler
                                 'Update
                                 DataOutputPos = DataOutputPos + UBound(data) + 1
                                 WrittenFiles = WrittenFiles + 1
-                                If Not prgBar Is Nothing Then prgBar.Value = WrittenFiles
+                                If Not prgBar Is Nothing Then prgBar.value = WrittenFiles
                             Else
                                 Err.Description = "Incongruencia en archivos de recurso"
                                 GoTo ErrHandler
@@ -1320,14 +1320,14 @@ On Local Error GoTo ErrHandler
                 
                 'Read everything?
                 While ReadNext_InfoHead(ResourceFile, FileHead, InfoHead, ResourceReadFiles)
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                     Call Secure_Info_Header(InfoHead)
 #End If
                     'GetData and update InfoHeader
                     Call Get_File_RawData(ResourcePath, InfoHead, data)
                     InfoHead.lngFileStart = DataOutputPos
                     
-#If SeguridadAlkon Then
+#If seguridadalkon Then
                     Call Secure_Info_Header(InfoHead)
 #End If
                     
@@ -1338,7 +1338,7 @@ On Local Error GoTo ErrHandler
                     'Update
                     DataOutputPos = DataOutputPos + UBound(data) + 1
                     WrittenFiles = WrittenFiles + 1
-                    If Not prgBar Is Nothing Then prgBar.Value = WrittenFiles
+                    If Not prgBar Is Nothing Then prgBar.value = WrittenFiles
                     DoEvents
                 Wend
             
@@ -1353,17 +1353,13 @@ On Local Error GoTo ErrHandler
     
     'Check integrity
     If (PatchFileHead.lngNumFiles = WrittenFiles) Then
-#If SeguridadAlkon Then
-        Dim md5 As New clsMD5
-        md5.MD5Reset
-        Debug.Print md5.GetMD5File(OutputFilePath)
-        md5.MD5Reset
-        If md5.GetMD5File(OutputFilePath) = CheckSum Then
+#If seguridadalkon Then
+        If MD5.HashFile(OutputFilePath) = CheckSum Then
 #End If
             'Replace File
             Call Kill(ResourceFilePath)
             Name OutputFilePath As ResourceFilePath
-#If SeguridadAlkon Then
+#If seguridadalkon Then
         Else
             Err.Description = "Checksum Incorrecto"
             GoTo ErrHandler
@@ -1416,7 +1412,7 @@ Public Function GetVersion(ByVal ResourceFilePath As String) As Long
         'Extract the FILEHEADER
         Get ResourceFile, 1, FileHead
         
-#If SeguridadAlkon Then
+#If seguridadalkon Then
         Call Secure_File_Header(FileHead)
 #End If
     Close ResourceFile

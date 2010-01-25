@@ -6,3 +6,4 @@
  - 25/05/2009 Fix al commit anterior
  - 20/11/2009 Ahora si la página donde se alojan los archivos está offline, se accede a una mirror (Pato)
  - 15/12/2009 Ahora los archivos pueden tener un flag critical, si es true se vuelve a abrir el AU. (Pato)
+ - 25/01/2010 Vole el control inet y puse un winsock manejado por la clase cDownload (Marco)
