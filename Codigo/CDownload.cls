@@ -12,6 +12,7 @@ Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
+Private Declare Function GetTickCount Lib "kernel32" () As Long
 
 'This code was written by Emiliano Scavuzzo <anshoku at yahoo.com> Rosario, Argentina.
 'http://www.csocketmaster.com.ar/
@@ -59,17 +60,32 @@ Private m_blnHeaderArrived As Boolean
 Private m_intFileHandle As Integer
 Private m_lngFileSize As Long
 
+Private m_totalBytesDownloaded As Long
+Private m_startTime As Long
+Private m_currentFileDownloaded As Long
+
 'our socket
 Private WithEvents cmSocket As Winsock
 Attribute cmSocket.VB_VarHelpID = -1
 
 Private Sub Class_Terminate()
-Set cmSocket = Nothing
+    Set cmSocket = Nothing
 End Sub
 
 '==============================================================================
 'PROPERTIES
 '==============================================================================
+Public Property Get TotalDownloadedBytes() As Long
+    TotalDownloadedBytes = m_totalBytesDownloaded
+End Property
+
+Public Property Get CurrentFileDownloadedBytes() As Long
+    CurrentFileDownloadedBytes = m_currentFileDownloaded
+End Property
+
+Public Property Get AverageDownloadSpeed() As Long
+    AverageDownloadSpeed = (m_totalBytesDownloaded / (GetTickCount() - m_startTime)) * 1000
+End Property
 
 Public Property Get Proxy() As String
 Attribute Proxy.VB_Description = "Returns/Sets HTTP proxy"
@@ -130,11 +146,19 @@ Attribute FileSize.VB_Description = "Returns file size in bytes or zero if it is
 FileSize = m_lngFileSize
 End Property
 
-Public Sub Download(Optional URL As Variant, Optional Destination As Variant)
+Public Sub Init(ByRef wsk As Winsock)
+    Set cmSocket = wsk
+End Sub
+
+Public Sub Download(Optional URL As String, Optional Destination As String, Optional ResetTimeCounter As Boolean = True)
 Attribute Download.VB_Description = "Download file"
     On Error GoTo Error_Handler
-    Set cmSocket = Nothing
-        Set cmSocket = frmDownload.wskDownload
+    
+    If cmSocket Is Nothing Then
+        Err.Number = 10001
+        Err.Description = "No se ha inicializado el winsock"
+        Call Err.Raise(Err.Number, , Err.Description)
+    End If
 
     If Not IsMissing(URL) Then
         m_strURL = Trim(URL)
@@ -144,10 +168,17 @@ Attribute Download.VB_Description = "Download file"
         m_strDestination = Trim(Destination)
     End If
     
+    
     If m_acAccess = cdDirect Then
         cmSocket.Connect GetHostFromURL(m_strURL), 80
     Else
         cmSocket.Connect m_strProxy, m_lngProxyPort
+    End If
+    
+    m_currentFileDownloaded = 0
+    If ResetTimeCounter Then
+        m_startTime = GetTickCount()
+        m_totalBytesDownloaded = 0
     End If
     
     Exit Sub
@@ -240,6 +271,9 @@ End If
 
 Put m_intFileHandle, LOF(m_intFileHandle) + 1, strChunk
 
+    m_totalBytesDownloaded = m_totalBytesDownloaded + Len(strChunk)
+    m_currentFileDownloaded = m_currentFileDownloaded + Len(strChunk)
+    
 RaiseEvent DataArrival(Len(strChunk))
 
 Exit Sub
@@ -271,7 +305,7 @@ RaiseEvent Completed
 End Sub
 
 'Ups! We got an error
-Private Sub cmSocket_Error(ByVal Number As Integer, Description As String, ByVal Scode As Long, ByVal Source As String, ByVal HelpFile As String, ByVal HelpContext As Long, CancelDisplay As Boolean)
+Private Sub cmSocket_Error(ByVal Number As Integer, Description As String, ByVal Scode As Long, ByVal source As String, ByVal HelpFile As String, ByVal HelpContext As Long, CancelDisplay As Boolean)
 Reset
 RaiseEvent Error(Number, Description)
 End Sub
@@ -327,7 +361,7 @@ End Function
 'get variable value from the header
 Private Function GetVariableValue(ByRef strHeader As String, ByVal strVariable As String) As String
 Dim Init As Long
-Dim Last As Long
+Dim last As Long
 
 Init = InStr(1, strHeader, strVariable, vbTextCompare)
 
@@ -337,16 +371,16 @@ If Init = 0 Or Init = Null Then
 End If
 
 Init = Init + Len(strVariable) + 1
-Last = InStr(Init, strHeader, vbCrLf, vbTextCompare)
+last = InStr(Init, strHeader, vbCrLf, vbTextCompare)
 
 
-GetVariableValue = Trim(mid(strHeader, Init, Last - Init))
+GetVariableValue = Trim(mid(strHeader, Init, last - Init))
 
 End Function
 
 'reset variables
 Private Sub Reset()
-Set cmSocket = Nothing
+If Not cmSocket Is Nothing Then cmSocket.Close
 m_strHeader = ""
 m_blnHeaderArrived = False
 If m_intFileHandle <> 0 Then Close #m_intFileHandle

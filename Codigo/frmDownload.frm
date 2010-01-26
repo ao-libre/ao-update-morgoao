@@ -26,7 +26,6 @@ Begin VB.Form frmDownload
       _Version        =   393216
    End
    Begin VB.Timer TimerTimeOut 
-      Enabled         =   0   'False
       Interval        =   10000
       Left            =   240
       Top             =   3000
@@ -62,7 +61,6 @@ Begin VB.Form frmDownload
       _Version        =   393217
       BackColor       =   12632256
       BorderStyle     =   0
-      Enabled         =   -1  'True
       ReadOnly        =   -1  'True
       ScrollBars      =   2
       TextRTF         =   $"frmDownload.frx":60868
@@ -77,6 +75,46 @@ Begin VB.Form frmDownload
       _ExtentY        =   873
       _Version        =   393216
       Appearance      =   0
+   End
+   Begin VB.Label lblVelocidad 
+      AutoSize        =   -1  'True
+      BackStyle       =   0  'Transparent
+      Caption         =   "Velocidad: "
+      BeginProperty Font 
+         Name            =   "MS Sans Serif"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   700
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      ForeColor       =   &H8000000E&
+      Height          =   195
+      Left            =   6360
+      TabIndex        =   6
+      Top             =   5640
+      Width           =   975
+   End
+   Begin VB.Label lblDescargado 
+      AutoSize        =   -1  'True
+      BackStyle       =   0  'Transparent
+      Caption         =   "Descargado"
+      BeginProperty Font 
+         Name            =   "MS Sans Serif"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   700
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      ForeColor       =   &H8000000E&
+      Height          =   195
+      Left            =   720
+      TabIndex        =   5
+      Top             =   3840
+      Width           =   1035
    End
    Begin VB.Image imgCheck 
       Height          =   360
@@ -105,6 +143,7 @@ Begin VB.Form frmDownload
       Width           =   390
    End
    Begin VB.Image cmdComenzar 
+      Enabled         =   0   'False
       Height          =   645
       Left            =   1080
       Picture         =   "frmDownload.frx":613C5
@@ -162,6 +201,8 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
+Private Declare Function GetTickCount Lib "kernel32" () As Long
+
 
 Public WithEvents Download As CDownload
 Attribute Download.VB_VarHelpID = -1
@@ -181,14 +222,23 @@ Private Sub Download_Starting(ByVal FileSize As Long, ByVal Header As String)
 If FileSize <> 0 Then
     pbDownload.max = FileSize
 End If
+
 pbDownload.value = 0
 End Sub
 
 Private Sub Download_DataArrival(ByVal bytesTotal As Long)
 'TODO: Cambiar la interface y permitir lblBytes y lblRate para darle más información al usuario.
 'lblBytes = Val(lblBytes) + bytesTotal
+Static lastTime As Long
+
 If Download.FileSize <> 0 Then
     pbDownload.value = pbDownload.value + bytesTotal
+    
+    If GetTickCount - lastTime > 500 Then
+        lblDescargado = "Descargado " & Round(Download.CurrentFileDownloadedBytes / 1048576, 2) & " MB de " & Round(Download.FileSize / 1048576, 2)
+        lblVelocidad = "Velocidad: " & Round(Download.AverageDownloadSpeed / 1024, 2) & " kB/s"
+        lastTime = GetTickCount
+    End If
     ' lblRate = Int(Val(lblBytes) * 100 / Download.FileSize) & "%"
 End If
 End Sub
@@ -197,7 +247,6 @@ Private Sub Download_Completed()
 'lblRate = "100 %"
 pbDownload.max = 100
 pbDownload.value = 100
-
 'Termino la descarga, debemos seguir con la que sigue. Call NextDownload
 Downloading = False
 
@@ -230,12 +279,31 @@ End Sub
 
 Private Sub Download_Error(ByVal Number As Integer, Description As String)
     'Manejar el error que hubo.
+    'Si estabamos bajando el archivo de config y tiro error, tratamos de bajar del mirror
+    'Connection is aborted due to timeout or other failure
+    If Number = 10053 Then
+        If downloadingConfig Then
+            If Not WebTimeOut Then
+                Download.Cancel
+                WebTimeOut = True
+                Downloading = False
+                Call DownloadConfigFile
+            Else
+                If MsgBox("No se ha podido acceder a la web y por lo tanto su cliente puede estar desactualizado" & vbCrLf & "¿Desea correr el cliente de todas formas?", vbYesNo) = vbYes Then
+                    Call ShellArgentum
+                Else
+                    Download.Cancel
+                    End
+                End If
+            End If
+        End If
+    End If
 End Sub
 
 
 Public Sub DownloadConfigFile()
-    downloadingConfig = True
     
+    downloadingConfig = True
     If Not WebTimeOut Then
         Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargando archivo de configuración.", 255, 255, 255, True, False, False)
         UPDATES_SITE = UPDATE_URL
@@ -264,7 +332,11 @@ Public Sub DownloadFile(ByVal file As String)
         FileName = ReturnFileOrFolder(sURL, True, True)
         If FileExist(filePath & FileName, vbArchive) Then Kill filePath & FileName
         
-        Me.Download.Download sURL, filePath & FileName
+        If downloadingConfig Then
+            Me.Download.Download sURL, filePath & FileName, True
+        Else
+            Me.Download.Download sURL, filePath & FileName, False
+        End If
         
         lblDownloadPath.Caption = FileName
     End If
@@ -281,6 +353,7 @@ End Sub
 
 Private Sub Form_Load()
     Set Download = New CDownload
+    Call Download.Init(Me.wskDownload)
     imgCheck(2).Picture = imgCheck(IIf(NoExecute, 0, 1)).Picture
     cmdComenzar.Enabled = False
 End Sub
