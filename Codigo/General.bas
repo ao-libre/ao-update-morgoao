@@ -16,7 +16,7 @@ Public Const SW_SHOWNORMAL As Long = 1
 Public Caller As String
 Public NoExecute As Boolean
 Public UPDATES_SITE As String
-Public Const UPDATE_URL As String = "http://aotest.argentuuum.com.ar/Aoupdate/"
+Public Const UPDATE_URL As String = "http://ao.alkon.com.ar/autoupdate/"
 Public Const UPDATE_URL_MIRROR As String = "http://aoupdate.argentuuum.com.ar/updates/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
 Public Const PARAM_UPDATED As String = "/uptodate"
@@ -46,6 +46,7 @@ Public DownloadQueue() As Long
 Public DownloadQueueIndex As Long
 Public PatchQueueIndex As Long
 Public ClientParams As String
+Public StillDownloading As Boolean
 
 ''
 ' Loads the AoUpdate Ini File to an struct array
@@ -144,7 +145,7 @@ On Error GoTo noqueue
 On Error GoTo Error
         ClientParams = PARAM_UPDATED & " " & ClientParams
         Call AddtoRichTextBox(frmDownload.rtbDetalle, "Cliente de Argentum Online actualizado correctamente.", 255, 255, 255, True, False, False)
-        frmDownload.cmdComenzar.Enabled = True
+        StillDownloading = False
         
         If Not NoExecute Then
             Call ShellArgentum
@@ -190,14 +191,15 @@ Exit Sub
 noqueue: 'If we get here, it means that there isn't any update.
     
     Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargas finalizadas", 255, 255, 255, True, False, False)
-    frmDownload.cmdComenzar.Enabled = True
+    ''''1frmDownload.imgJugar.Enabled = True
     
     ClientParams = PARAM_UPDATED & " " & ClientParams
-    
+    StillDownloading = False
     If Not NoExecute Then
         Call ShellArgentum
         End
     End If
+    
 Exit Sub
 
 Error:
@@ -261,7 +263,7 @@ Public Sub Main()
     
     DownloadsPath = App.Path & "\TEMP\"
     frmDownload.filePath = DownloadsPath
-    
+    StillDownloading = True
     
     'Nos fijamos si estamos ejecutando la copia del aoupdate o el original, si ejecutamos el original lo copiamos y llamamos al otro con shellexecute
     If UCase(App.EXEName) = "AOUPDATE" And Command = vbNullString Then

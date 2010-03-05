@@ -6,21 +6,21 @@ Begin VB.Form frmDownload
    BackColor       =   &H00E0E0E0&
    BorderStyle     =   0  'None
    Caption         =   "AoUpdate Downloader"
-   ClientHeight    =   5955
+   ClientHeight    =   6360
    ClientLeft      =   0
    ClientTop       =   0
-   ClientWidth     =   8955
+   ClientWidth     =   9360
    Icon            =   "frmDownload.frx":0000
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
    Picture         =   "frmDownload.frx":22262
-   ScaleHeight     =   5955
-   ScaleWidth      =   8955
+   ScaleHeight     =   6360
+   ScaleWidth      =   9360
    StartUpPosition =   1  'CenterOwner
    Begin MSWinsockLib.Winsock wskDownload 
       Left            =   240
-      Top             =   4440
+      Top             =   4200
       _ExtentX        =   741
       _ExtentY        =   741
       _Version        =   393216
@@ -44,62 +44,40 @@ Begin VB.Form frmDownload
          Strikethrough   =   0   'False
       EndProperty
       Height          =   375
-      Left            =   9120
+      Left            =   9360
       Style           =   1  'Graphical
       TabIndex        =   4
-      Top             =   5040
+      Top             =   2400
       Width           =   1575
    End
    Begin RichTextLib.RichTextBox rtbDetalle 
       Height          =   2415
-      Left            =   240
+      Left            =   480
       TabIndex        =   3
-      Top             =   480
+      Top             =   600
       Width           =   8415
       _ExtentX        =   14843
       _ExtentY        =   4260
       _Version        =   393217
       BackColor       =   12632256
-      BorderStyle     =   0
       ReadOnly        =   -1  'True
       ScrollBars      =   2
-      TextRTF         =   $"frmDownload.frx":60868
+      TextRTF         =   $"frmDownload.frx":799EF
    End
    Begin MSComctlLib.ProgressBar pbDownload 
-      Height          =   495
-      Left            =   720
+      Height          =   375
+      Left            =   960
       TabIndex        =   0
-      Top             =   3360
+      Top             =   3610
       Width           =   7455
       _ExtentX        =   13150
-      _ExtentY        =   873
+      _ExtentY        =   661
       _Version        =   393216
       Appearance      =   0
-   End
-   Begin VB.Label lblVelocidad 
-      AutoSize        =   -1  'True
-      BackStyle       =   0  'Transparent
-      Caption         =   "Velocidad: "
-      BeginProperty Font 
-         Name            =   "MS Sans Serif"
-         Size            =   8.25
-         Charset         =   0
-         Weight          =   700
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      ForeColor       =   &H8000000E&
-      Height          =   195
-      Left            =   6360
-      TabIndex        =   6
-      Top             =   5640
-      Width           =   975
    End
    Begin VB.Label lblDescargado 
       AutoSize        =   -1  'True
       BackStyle       =   0  'Transparent
-      Caption         =   "Descargado"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
          Size            =   8.25
@@ -111,51 +89,100 @@ Begin VB.Form frmDownload
       EndProperty
       ForeColor       =   &H8000000E&
       Height          =   195
-      Left            =   720
+      Left            =   2160
+      TabIndex        =   7
+      Top             =   4440
+      Width           =   75
+   End
+   Begin VB.Image imgSalirClick 
+      Height          =   465
+      Left            =   3840
+      Picture         =   "frmDownload.frx":79A72
+      Top             =   0
+      Visible         =   0   'False
+      Width           =   1050
+   End
+   Begin VB.Image imgJugarClick 
+      Height          =   495
+      Left            =   5040
+      Picture         =   "frmDownload.frx":7D8A2
+      Top             =   0
+      Visible         =   0   'False
+      Width           =   1095
+   End
+   Begin VB.Image imgJugarRollover 
+      Height          =   495
+      Left            =   7440
+      Picture         =   "frmDownload.frx":81B55
+      Top             =   0
+      Visible         =   0   'False
+      Width           =   1095
+   End
+   Begin VB.Image imgSalirRollover 
+      Height          =   465
+      Left            =   6360
+      Picture         =   "frmDownload.frx":85E42
+      Top             =   0
+      Visible         =   0   'False
+      Width           =   1050
+   End
+   Begin VB.Label lblTotal 
+      AutoSize        =   -1  'True
+      BackStyle       =   0  'Transparent
+      BeginProperty Font 
+         Name            =   "MS Sans Serif"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   700
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      ForeColor       =   &H8000000E&
+      Height          =   195
+      Left            =   3600
+      TabIndex        =   6
+      Top             =   4440
+      Width           =   75
+   End
+   Begin VB.Label lblVelocidad 
+      AutoSize        =   -1  'True
+      BackStyle       =   0  'Transparent
+      BeginProperty Font 
+         Name            =   "MS Sans Serif"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   700
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      ForeColor       =   &H8000000E&
+      Height          =   195
+      Left            =   2160
       TabIndex        =   5
-      Top             =   3840
-      Width           =   1035
+      Top             =   4200
+      Width           =   75
    End
    Begin VB.Image imgCheck 
       Height          =   360
-      Index           =   2
-      Left            =   240
-      Picture         =   "frmDownload.frx":608EB
-      Top             =   5470
+      Left            =   420
+      Top             =   5750
       Width           =   390
    End
-   Begin VB.Image imgCheck 
-      Height          =   360
-      Index           =   1
-      Left            =   960
-      Picture         =   "frmDownload.frx":60C5D
+   Begin VB.Image imgCheckBkp 
+      Height          =   405
+      Left            =   600
+      Picture         =   "frmDownload.frx":89D13
       Top             =   0
       Visible         =   0   'False
-      Width           =   390
-   End
-   Begin VB.Image imgCheck 
-      Height          =   360
-      Index           =   0
-      Left            =   480
-      Picture         =   "frmDownload.frx":61053
-      Top             =   0
-      Visible         =   0   'False
-      Width           =   390
-   End
-   Begin VB.Image cmdComenzar 
-      Enabled         =   0   'False
-      Height          =   645
-      Left            =   1080
-      Picture         =   "frmDownload.frx":613C5
-      Top             =   4110
-      Width           =   2700
+      Width           =   480
    End
    Begin VB.Image imgExit 
-      Height          =   645
-      Left            =   1080
-      Picture         =   "frmDownload.frx":66EBB
-      Top             =   4750
-      Width           =   2700
+      Height          =   405
+      Left            =   3225
+      Top             =   5310
+      Width           =   1020
    End
    Begin VB.Label lblDownloadPath 
       BackStyle       =   0  'Transparent
@@ -170,9 +197,9 @@ Begin VB.Form frmDownload
       EndProperty
       ForeColor       =   &H8000000E&
       Height          =   255
-      Left            =   2880
+      Left            =   3000
       TabIndex        =   2
-      Top             =   3045
+      Top             =   3230
       Width           =   5175
    End
    Begin VB.Label Label1 
@@ -189,10 +216,16 @@ Begin VB.Form frmDownload
       EndProperty
       ForeColor       =   &H8000000E&
       Height          =   255
-      Left            =   840
+      Left            =   960
       TabIndex        =   1
-      Top             =   3045
+      Top             =   3230
       Width           =   2055
+   End
+   Begin VB.Image imgJugar 
+      Height          =   405
+      Left            =   3195
+      Top             =   4830
+      Width           =   1020
    End
 End
 Attribute VB_Name = "frmDownload"
@@ -235,19 +268,20 @@ If Download.FileSize <> 0 Then
     pbDownload.value = pbDownload.value + bytesTotal
     
     If GetTickCount - lastTime > 500 Then
-        lblDescargado = "Descargado " & Round(Download.CurrentFileDownloadedBytes / 1048576, 2) & " MB de " & Round(Download.FileSize / 1048576, 2)
-        lblVelocidad = "Velocidad: " & Round(Download.AverageDownloadSpeed / 1024, 2) & " kB/s"
+        lblDescargado.Caption = Round(Download.CurrentFileDownloadedBytes / 1048576, 2)
+        lblTotal.Caption = Round(Download.FileSize / 1048576, 2)
+        lblVelocidad.Caption = Round(Download.AverageDownloadSpeed / 1024, 2)
         lastTime = GetTickCount
     End If
-    ' lblRate = Int(Val(lblBytes) * 100 / Download.FileSize) & "%"
 End If
 End Sub
 
 Private Sub Download_Completed()
-'lblRate = "100 %"
 pbDownload.max = 100
 pbDownload.value = 100
-'Termino la descarga, debemos seguir con la que sigue. Call NextDownload
+
+lblDescargado.Caption = Round(Download.CurrentFileDownloadedBytes / 1048576, 2)
+lblTotal.Caption = Round(Download.CurrentFileDownloadedBytes / 1048576, 2)
 Downloading = False
 
 If downloadingConfig Then
@@ -267,14 +301,15 @@ Else
             
         Name DownloadsPath & .name As App.Path & "\" & .Path & "\" & .name
         
-        If .Critical Then
-            Call ShellExecute(0, "OPEN", App.Path & "\" & .Path & "\" & .name, Command, App.Path, SW_SHOWNORMAL)    'We open AoUpdate.exe updated
-            End
-        End If
+'        If .Critical Then
+'            Call ShellExecute(0, "OPEN", App.Path & "\" & .Path & "\" & .name, Command, App.Path, SW_SHOWNORMAL)    'We open AoUpdate.exe updated
+'            End
+'        End If
     End With
     
     Call NextDownload
 End If
+
 End Sub
 
 Private Sub Download_Error(ByVal Number As Integer, Description As String)
@@ -343,8 +378,7 @@ Public Sub DownloadFile(ByVal file As String)
 End Sub
 
 Private Sub cmdComenzar_Click()
-    Call ShellArgentum
-    End
+
 End Sub
 
 Private Sub cmdExit_Click()
@@ -354,8 +388,9 @@ End Sub
 Private Sub Form_Load()
     Set Download = New CDownload
     Call Download.Init(Me.wskDownload)
-    imgCheck(2).Picture = imgCheck(IIf(NoExecute, 0, 1)).Picture
-    cmdComenzar.Enabled = False
+    NoExecute = Not NoExecute
+    Call imgCheck_Click
+    ''''1imgJugar.Enabled = False
 End Sub
 
 Public Function ReturnFileOrFolder(ByVal FullPath As String, _
@@ -387,9 +422,18 @@ Public Function ReturnFileOrFolder(ByVal FullPath As String, _
                              Left$(FullPath, intDelimiterIndex))
 End Function
 
-Private Sub imgCheck_Click(index As Integer)
+Private Sub Form_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    imgExit.Picture = Nothing
+    imgJugar.Picture = Nothing
+End Sub
+
+Private Sub imgCheck_Click()
     NoExecute = Not NoExecute
-    imgCheck(index).Picture = imgCheck(IIf(NoExecute, 0, 1)).Picture
+    If NoExecute Then
+        imgCheck.Picture = Nothing
+    Else
+        imgCheck.Picture = imgCheckBkp.Picture
+    End If
 End Sub
 
 Private Sub imgExit_Click()
@@ -397,6 +441,45 @@ Private Sub imgExit_Click()
     End
 End Sub
 
+
+Private Sub Label2_Click()
+
+End Sub
+
+Private Sub imgExit_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    imgExit.Picture = imgSalirClick.Picture
+End Sub
+
+Private Sub imgExit_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    imgExit.Picture = imgSalirRollover.Picture
+    imgJugar.Picture = Nothing
+End Sub
+
+Private Sub imgExit_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    imgExit.Picture = Nothing
+End Sub
+
+Private Sub imgJugar_Click()
+    If StillDownloading Then
+        Call AddtoRichTextBox(rtbDetalle, "¡No puedes ejecutar el juego mientras se está actualizando! Aguarda unos minutos por favor", , , , True)
+        Exit Sub
+    End If
+    Call ShellArgentum
+    End
+End Sub
+
+Private Sub imgJugar_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    imgJugar.Picture = imgJugarClick.Picture
+End Sub
+
+Private Sub imgJugar_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    imgJugar.Picture = imgJugarRollover.Picture
+    imgExit.Picture = Nothing
+End Sub
+
+Private Sub imgJugar_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    imgJugar.Picture = Nothing
+End Sub
 
 Private Sub TimerTimeOut_Timer()
 If downloadingConfig = True Then
