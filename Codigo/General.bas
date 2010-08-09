@@ -1,4 +1,32 @@
 Attribute VB_Name = "General"
+'Argentum Online 0.12.2
+'Copyright (C) 2002 Márquez Pablo Ignacio
+'
+'This program is free software; you can redistribute it and/or modify
+'it under the terms of the Affero General Public License;
+'either version 1 of the License, or any later version.
+'
+'This program is distributed in the hope that it will be useful,
+'but WITHOUT ANY WARRANTY; without even the implied warranty of
+'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+'Affero General Public License for more details.
+'
+'You should have received a copy of the Affero General Public License
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'
+'Argentum Online is based on Baronsoft's VB6 Online RPG
+'You can contact the original creator of ORE at aaron@baronsoft.com
+'for more information about ORE please visit http://www.baronsoft.com/
+'
+'
+'You can contact me at:
+'morgolock@speedy.com.ar
+'www.geocities.com/gmorgolock
+'Calle 3 número 983 piso 7 dto A
+'La Plata - Pcia, Buenos Aires - Republica Argentina
+'Código Postal 1900
+'Pablo Ignacio Márquez
+
 ''
 '  This module has the general functions and routines of the Argentum Online Auto Updater
 '
@@ -16,6 +44,8 @@ Public Const SW_SHOWNORMAL As Long = 1
 Public Caller As String
 Public NoExecute As Boolean
 Public UPDATES_SITE As String
+'Public Const UPDATE_URL As String = "http://morgotest.argentuuum.com.ar/Aoupdate/"
+'Public Const UPDATE_URL_MIRROR As String = ""
 Public Const UPDATE_URL As String = "http://ao.alkon.com.ar/autoupdate/"
 Public Const UPDATE_URL_MIRROR As String = "http://aoupdate.argentuuum.com.ar/updates/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
@@ -38,6 +68,8 @@ Public Type tAoUpdatePatches
 End Type
 
 Public DownloadsPath As String
+
+Public DownloadingFromMirror As Boolean
 
 Public AoUpdatePatches() As tAoUpdatePatches
 
@@ -118,11 +150,12 @@ Public Sub CompareUpdateFiles(ByRef remoteUpdateFile() As tAoUpdateFile)
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
             DownloadQueue(tmpArrIndex) = i
-        ElseIf remoteUpdateFile(i).MD5 <> MD5File(App.Path & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name) Then
+        ElseIf UCase(remoteUpdateFile(i).MD5) <> MD5.MD5File(App.Path & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name) Then
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
             DownloadQueue(tmpArrIndex) = i
         End If
+        DoEvents
     Next i
 End Sub
 
@@ -138,13 +171,26 @@ Public Sub NextDownload()
 'Last modified: 27/10/2008
 '
 '*************************************************
-On Error GoTo noqueue
+On Error GoTo Error
+
+    If isQueueEmpty(DownloadQueue) Then
+        Call AddtoRichTextBox(frmDownload.rtbDetalle, "No hay ninguna actualización disponible.", 255, 255, 255, True, False, False)
+        
+        ClientParams = PARAM_UPDATED & " " & ClientParams
+        StillDownloading = False
+        If Not NoExecute Then
+            Call ShellArgentum
+            End
+        End If
+        Exit Sub
+    End If
     
     If DownloadQueueIndex > UBound(DownloadQueue) Then
 
-On Error GoTo Error
+
         ClientParams = PARAM_UPDATED & " " & ClientParams
         Call AddtoRichTextBox(frmDownload.rtbDetalle, "Cliente de Argentum Online actualizado correctamente.", 255, 255, 255, True, False, False)
+        
         StillDownloading = False
         
         If Not NoExecute Then
@@ -179,6 +225,7 @@ On Error GoTo Error
                 
                 Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargando " & .name & " - " & .Comment, 255, 255, 255, True, False, False)
                 
+                
                 Call frmDownload.DownloadFile(Replace(.Path, "\", "/") & .name)
             End If
         End With
@@ -188,19 +235,6 @@ On Error GoTo Error
     End If
 Exit Sub
 
-noqueue: 'If we get here, it means that there isn't any update.
-    
-    Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargas finalizadas", 255, 255, 255, True, False, False)
-    ''''1frmDownload.imgJugar.Enabled = True
-    
-    ClientParams = PARAM_UPDATED & " " & ClientParams
-    StillDownloading = False
-    If Not NoExecute Then
-        Call ShellArgentum
-        End
-    End If
-    
-Exit Sub
 
 Error:
     Call MsgBox(Err.Description, vbCritical, Err.Number)
@@ -213,7 +247,7 @@ Public Sub PatchDownloaded()
 
     Call AddtoRichTextBox(frmDownload.rtbDetalle, "Parcheando Archivo de recursos Ao puede demorar unos minutos..", 255, 255, 255, True, False, False)
     With AoUpdateRemote(DownloadQueue(DownloadQueueIndex - 1))
-        'Apply downlaoded patch!
+        'Apply downloaded patch!
             
 #If seguridadalkon Then
         If Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", UCase(AoUpdatePatches(PatchQueueIndex).MD5), frmDownload.pbDownload) Then
@@ -254,12 +288,24 @@ Public Sub ConfgFileDownloaded()
     Call CompareUpdateFiles(AoUpdateRemote)  'Compare local vs remote.
     
     'Start downloads!
+    If Not isQueueEmpty(DownloadQueue) Then
+        frmDownload.lblTotalArchivos.Caption = UBound(DownloadQueue) + 1
+    End If
     Call NextDownload
 End Sub
+Public Function isQueueEmpty(ByRef Queue() As Long)
+    On Error GoTo Error
+    isQueueEmpty = Not (UBound(Queue) >= 0)
+    Exit Function
+Error:
+    isQueueEmpty = True
+End Function
 
 Public Sub Main()
     Dim i As Long
     Dim Pos As Byte
+    
+    Randomize Timer
     
     DownloadsPath = App.Path & "\TEMP\"
     frmDownload.filePath = DownloadsPath

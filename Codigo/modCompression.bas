@@ -1,4 +1,32 @@
 Attribute VB_Name = "modCompression"
+'Argentum Online 0.12.2
+'Copyright (C) 2002 Márquez Pablo Ignacio
+'
+'This program is free software; you can redistribute it and/or modify
+'it under the terms of the Affero General Public License;
+'either version 1 of the License, or any later version.
+'
+'This program is distributed in the hope that it will be useful,
+'but WITHOUT ANY WARRANTY; without even the implied warranty of
+'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+'Affero General Public License for more details.
+'
+'You should have received a copy of the Affero General Public License
+'along with this program; if not, you can find it at http://www.affero.org/oagpl.html
+'
+'Argentum Online is based on Baronsoft's VB6 Online RPG
+'You can contact the original creator of ORE at aaron@baronsoft.com
+'for more information about ORE please visit http://www.baronsoft.com/
+'
+'
+'You can contact me at:
+'morgolock@speedy.com.ar
+'www.geocities.com/gmorgolock
+'Calle 3 número 983 piso 7 dto A
+'La Plata - Pcia, Buenos Aires - Republica Argentina
+'Código Postal 1900
+'Pablo Ignacio Márquez
+
 Option Explicit
 
 Public Const GRH_SOURCE_FILE_EXT As String = ".bmp"
@@ -35,7 +63,7 @@ End Enum
 Private Declare Function compress Lib "zlib.dll" (dest As Any, destlen As Any, Src As Any, ByVal srclen As Long) As Long
 Private Declare Function uncompress Lib "zlib.dll" (dest As Any, destlen As Any, Src As Any, ByVal srclen As Long) As Long
 
-Private Declare Sub CopyMemory Lib "kernel32" Alias "RtlMoveMemory" (ByRef dest As Any, ByRef source As Any, ByVal byteCount As Long)
+Private Declare Sub CopyMemory Lib "kernel32" Alias "RtlMoveMemory" (ByRef dest As Any, ByRef Source As Any, ByVal byteCount As Long)
 
 'BitMaps Strucures
 Public Type BITMAPFILEHEADER
@@ -1354,7 +1382,7 @@ On Local Error GoTo ErrHandler
     'Check integrity
     If (PatchFileHead.lngNumFiles = WrittenFiles) Then
 #If seguridadalkon Then
-        If MD5.HashFile(OutputFilePath) = CheckSum Then
+        If MD5.MD5File(OutputFilePath) = CheckSum Then
 #End If
             'Replace File
             Call Kill(ResourceFilePath)

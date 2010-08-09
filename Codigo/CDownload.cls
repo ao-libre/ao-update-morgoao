@@ -16,7 +16,7 @@ Private Declare Function GetTickCount Lib "kernel32" () As Long
 
 'This code was written by Emiliano Scavuzzo <anshoku at yahoo.com> Rosario, Argentina.
 'http://www.csocketmaster.com.ar/
-'A few modifications by Marco Vanotti to work with an MSWinsock Control.
+'A few modifications by Marco Vanotti to work with an MSWinsock Control and handle 404 exceptions.
 
 
 'NOTE: If FileSize = 0 that means the size of the file
@@ -237,6 +237,11 @@ If m_blnHeaderArrived = False Then
     'yes! the header has finished
     m_blnHeaderArrived = True
     
+    'Check if the file exists.
+    If InStr(1, m_strHeader, "404 not found", vbTextCompare) Then
+        Call Err.Raise(404, , "NOT FOUND")
+    End If
+    
     'maybe this chunk is half header and half file
     'we split the two
     strChunk = Right(m_strHeader, Len(m_strHeader) - lngSplit - 3)
@@ -305,7 +310,7 @@ RaiseEvent Completed
 End Sub
 
 'Ups! We got an error
-Private Sub cmSocket_Error(ByVal Number As Integer, Description As String, ByVal Scode As Long, ByVal source As String, ByVal HelpFile As String, ByVal HelpContext As Long, CancelDisplay As Boolean)
+Private Sub cmSocket_Error(ByVal Number As Integer, Description As String, ByVal Scode As Long, ByVal Source As String, ByVal HelpFile As String, ByVal HelpContext As Long, CancelDisplay As Boolean)
 Reset
 RaiseEvent Error(Number, Description)
 End Sub
