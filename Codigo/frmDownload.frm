@@ -43,6 +43,7 @@ Begin VB.Form frmDownload
       _Version        =   393217
       BackColor       =   12632256
       BorderStyle     =   0
+      Enabled         =   -1  'True
       ReadOnly        =   -1  'True
       ScrollBars      =   2
       Appearance      =   0
@@ -119,7 +120,7 @@ Begin VB.Form frmDownload
    Begin VB.Image imgSalirClick 
       Height          =   465
       Left            =   3840
-      Picture         =   "frmDownload.frx":72B56
+      Picture         =   "frmDownload.frx":72B55
       Top             =   0
       Visible         =   0   'False
       Width           =   1050
@@ -127,7 +128,7 @@ Begin VB.Form frmDownload
    Begin VB.Image imgJugarClick 
       Height          =   495
       Left            =   5040
-      Picture         =   "frmDownload.frx":76986
+      Picture         =   "frmDownload.frx":76985
       Top             =   0
       Visible         =   0   'False
       Width           =   1095
@@ -135,7 +136,7 @@ Begin VB.Form frmDownload
    Begin VB.Image imgJugarRollover 
       Height          =   495
       Left            =   7440
-      Picture         =   "frmDownload.frx":7AC39
+      Picture         =   "frmDownload.frx":7AC38
       Top             =   0
       Visible         =   0   'False
       Width           =   1095
@@ -143,7 +144,7 @@ Begin VB.Form frmDownload
    Begin VB.Image imgSalirRollover 
       Height          =   465
       Left            =   6360
-      Picture         =   "frmDownload.frx":7EF26
+      Picture         =   "frmDownload.frx":7EF25
       Top             =   0
       Visible         =   0   'False
       Width           =   1050
@@ -195,7 +196,7 @@ Begin VB.Form frmDownload
    Begin VB.Image imgCheckBkp 
       Height          =   405
       Left            =   600
-      Picture         =   "frmDownload.frx":82DF7
+      Picture         =   "frmDownload.frx":82DF6
       Top             =   0
       Visible         =   0   'False
       Width           =   480
@@ -436,10 +437,9 @@ Private Sub Download_Error(ByVal Number As Integer, Description As String)
     End If
 End Sub
 
-
 Public Sub DownloadConfigFile()
-    
     downloadingConfig = True
+    
     If Not WebTimeOut Then
         Call AddtoRichTextBox(frmDownload.rtbDetalle, "Descargando archivo de configuración.", 255, 255, 255, True, False, False)
         UPDATES_SITE = UPDATE_URL
@@ -449,6 +449,8 @@ Public Sub DownloadConfigFile()
         DownloadingFromMirror = True
     End If
     
+    TimerTimeOut.Enabled = False
+    TimerTimeOut.Enabled = True
     Call DownloadFile(AOUPDATE_FILE)
 End Sub
 
@@ -482,14 +484,6 @@ Public Sub DownloadFile(ByVal file As String)
         lblDownloadPath.Caption = FileName
         
     End If
-End Sub
-
-Private Sub cmdComenzar_Click()
-
-End Sub
-
-Private Sub cmdExit_Click()
-    End
 End Sub
 
 Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
@@ -554,11 +548,6 @@ Private Sub imgExit_Click()
     End
 End Sub
 
-
-Private Sub Label2_Click()
-
-End Sub
-
 Private Sub imgExit_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
     imgExit.Picture = imgSalirClick.Picture
 End Sub
@@ -595,7 +584,7 @@ Private Sub imgJugar_MouseUp(Button As Integer, Shift As Integer, x As Single, y
 End Sub
 
 Private Sub TimerTimeOut_Timer()
-If downloadingConfig = True Then
+If downloadingConfig Then
     If Not WebTimeOut Then
         Download.Cancel
         WebTimeOut = True
@@ -611,7 +600,4 @@ If downloadingConfig = True Then
         End If
     End If
 End If
-
-TimerTimeOut.Enabled = False
 End Sub
-

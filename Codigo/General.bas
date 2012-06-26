@@ -46,7 +46,7 @@ Public NoExecute As Boolean
 Public UPDATES_SITE As String
 'Public Const UPDATE_URL As String = "http://morgotest.argentuuum.com.ar/Aoupdate/"
 'Public Const UPDATE_URL_MIRROR As String = ""
-Public Const UPDATE_URL As String = "http://ao.alkon.com.ar/autoupdate/"
+Public Const UPDATE_URL As String = "http://argentumonline.3dgames.com.ar/autoupdate/"
 Public Const UPDATE_URL_MIRROR As String = "http://aoupdate.argentuuum.com.ar/updates/"
 Public Const AOUPDATE_FILE As String = "AoUpdate.ini"
 Public Const PARAM_UPDATED As String = "/uptodate"
@@ -101,19 +101,21 @@ On Error GoTo Error
     
     Call Leer.Initialize(file)
     
-    NumFiles = Leer.GetValue("INIT", "NumFiles")
+    NumFiles = Val(Leer.GetValue("INIT", "NumFiles"))
     
-    ReDim tmpAoUFile(NumFiles - 1) As tAoUpdateFile
+    If NumFiles > 0 Then
+        ReDim tmpAoUFile(NumFiles - 1) As tAoUpdateFile
     
-    For i = 1 To NumFiles
-        tmpAoUFile(i - 1).name = Leer.GetValue("File" & i, "Name")
-        tmpAoUFile(i - 1).version = CInt(Leer.GetValue("File" & i, "Version"))
-        tmpAoUFile(i - 1).MD5 = Leer.GetValue("File" & i, "MD5")
-        tmpAoUFile(i - 1).Path = Leer.GetValue("File" & i, "Path")
-        tmpAoUFile(i - 1).HasPatches = CBool(Val(Leer.GetValue("File" & i, "HasPatches")))
-        tmpAoUFile(i - 1).Comment = Leer.GetValue("File" & i, "Comment")
-        tmpAoUFile(i - 1).Critical = CBool(Val(Leer.GetValue("File" & i, "Critical")))
-    Next i
+        For i = 1 To NumFiles
+            tmpAoUFile(i - 1).name = Leer.GetValue("File" & i, "Name")
+            tmpAoUFile(i - 1).version = CInt(Val(Leer.GetValue("File" & i, "Version")))
+            tmpAoUFile(i - 1).MD5 = Leer.GetValue("File" & i, "MD5")
+            tmpAoUFile(i - 1).Path = Leer.GetValue("File" & i, "Path")
+            tmpAoUFile(i - 1).HasPatches = CBool(Val(Leer.GetValue("File" & i, "HasPatches")))
+            tmpAoUFile(i - 1).Comment = Leer.GetValue("File" & i, "Comment")
+            tmpAoUFile(i - 1).Critical = CBool(Val(Leer.GetValue("File" & i, "Critical")))
+        Next i
+    End If
     
     ReadAoUFile = tmpAoUFile
     
@@ -145,6 +147,8 @@ Public Sub CompareUpdateFiles(ByRef remoteUpdateFile() As tAoUpdateFile)
     'ReDim DownloadQueue(0) As Long
     tmpArrIndex = -1
     
+    On Error GoTo errHandler
+    
     For i = 0 To UBound(remoteUpdateFile)
         If Not FileExist(App.Path & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name, vbNormal) Then
             tmpArrIndex = tmpArrIndex + 1
@@ -157,6 +161,9 @@ Public Sub CompareUpdateFiles(ByRef remoteUpdateFile() As tAoUpdateFile)
         End If
         DoEvents
     Next i
+    
+    Exit Sub
+errHandler:
 End Sub
 
 ''
@@ -293,6 +300,7 @@ Public Sub ConfgFileDownloaded()
     End If
     Call NextDownload
 End Sub
+
 Public Function isQueueEmpty(ByRef Queue() As Long)
     On Error GoTo Error
     isQueueEmpty = Not (UBound(Queue) >= 0)
