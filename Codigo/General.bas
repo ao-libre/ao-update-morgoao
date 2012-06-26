@@ -154,7 +154,7 @@ Public Sub CompareUpdateFiles(ByRef remoteUpdateFile() As tAoUpdateFile)
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
             DownloadQueue(tmpArrIndex) = i
-        ElseIf UCase(remoteUpdateFile(i).MD5) <> MD5.MD5File(App.Path & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name) Then
+        ElseIf UCase$(remoteUpdateFile(i).MD5) <> MD5.MD5File(App.Path & remoteUpdateFile(i).Path & "\" & remoteUpdateFile(i).name) Then
             tmpArrIndex = tmpArrIndex + 1
             ReDim Preserve DownloadQueue(tmpArrIndex) As Long
             DownloadQueue(tmpArrIndex) = i
@@ -257,7 +257,7 @@ Public Sub PatchDownloaded()
         'Apply downloaded patch!
             
 #If seguridadalkon Then
-        If Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", UCase(AoUpdatePatches(PatchQueueIndex).MD5), frmDownload.pbDownload) Then
+        If Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", UCase$(AoUpdatePatches(PatchQueueIndex).MD5), frmDownload.pbDownload) Then
 #Else
         If Apply_Patch(App.Path & "\" & .Path & "\", DownloadsPath & "\", frmDownload.pbDownload) Then
 #End If
@@ -266,7 +266,7 @@ Public Sub PatchDownloaded()
             Call AddtoRichTextBox(frmDownload.rtbDetalle, "No se pudo parchear el archivo de recursos Ao", 255, 255, 255, True, False, False)
         End If
         'Delete patch after patching!
-        Kill DownloadsPath & "\" & Right(AoUpdatePatches(PatchQueueIndex).name, Len(AoUpdatePatches(PatchQueueIndex).name) - InStrRev(AoUpdatePatches(PatchQueueIndex).name, "/"))
+        Kill DownloadsPath & "\" & Right$(AoUpdatePatches(PatchQueueIndex).name, Len(AoUpdatePatches(PatchQueueIndex).name) - InStrRev(AoUpdatePatches(PatchQueueIndex).name, "/"))
         
         localVersion = GetVersion(App.Path & "\" & .Path & "\" & .name)
         
@@ -284,7 +284,7 @@ Private Sub CheckAoUpdateIntegrity()
     Dim nF As Integer
     
     'Look if exists the TEMP folder, if not, create it.
-    If Dir$(DownloadsPath, vbDirectory) = vbNullString Then
+    If Not FileExist(DownloadsPath, vbDirectory) Then
         Call MkDir(DownloadsPath)
     End If
 End Sub
@@ -320,7 +320,7 @@ Public Sub Main()
     StillDownloading = True
     
     'Nos fijamos si estamos ejecutando la copia del aoupdate o el original, si ejecutamos el original lo copiamos y llamamos al otro con shellexecute
-    If UCase(App.EXEName) = "AOUPDATE" And Command = vbNullString Then
+    If UCase$(App.EXEName) = "AOUPDATE" And Command = vbNullString Then
         'Nos copiamos..
         On Error GoTo tmpInUse
         
@@ -333,9 +333,11 @@ Public Sub Main()
         Select Case Command 'Si estamos ejecutando AoUpdateTMP leemos la linea de comandos
             Case vbNullString
                 End
+                
             Case "NoExecute"    'El AoUpdateComun nos pasa por parametro que no tenemos que ejecutar automaticamente el Ao al finalizar.
                 NoExecute = True
                 Caller = ""
+                
             Case "UpDated"
                 'Look & kill AoupdateTMP.exe
                 On Error GoTo Error
@@ -385,6 +387,7 @@ On Error GoTo Error
     Call frmDownload.Download.Cancel
     
     If Not FileExist(App.Path & "\" & Caller, vbArchive) Or Caller = "" Then Caller = "Argentum.exe"
+    
     Call ShellExecute(0, "OPEN", App.Path & "\" & Caller, ClientParams, App.Path, SW_SHOWNORMAL)   'We open Argentum.exe updated
     End
     Exit Sub

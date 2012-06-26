@@ -93,7 +93,7 @@ Proxy = m_strProxy
 End Property
 
 Public Property Let Proxy(ByVal strProxy As String)
-m_strProxy = Trim(strProxy)
+m_strProxy = Trim$(strProxy)
 End Property
 
 Public Property Get ProxyPort() As Long
@@ -120,7 +120,7 @@ URL = m_strURL
 End Property
 
 Public Property Let URL(ByVal strURL As String)
-m_strURL = Trim(strURL)
+m_strURL = Trim$(strURL)
 End Property
 
 Public Property Get Destination() As String
@@ -129,7 +129,7 @@ Destination = m_strDestination
 End Property
 
 Public Property Let Destination(ByVal strDestination As String)
-m_strDestination = Trim(Destination)
+m_strDestination = Trim$(Destination)
 End Property
 
 Public Property Get DisableRedirection() As Boolean
@@ -161,11 +161,11 @@ Attribute Download.VB_Description = "Download file"
     End If
 
     If Not IsMissing(URL) Then
-        m_strURL = Trim(URL)
+        m_strURL = Trim$(URL)
     End If
     
     If Not IsMissing(Destination) Then
-        m_strDestination = Trim(Destination)
+        m_strDestination = Trim$(Destination)
     End If
     
     
@@ -244,8 +244,8 @@ If m_blnHeaderArrived = False Then
     
     'maybe this chunk is half header and half file
     'we split the two
-    strChunk = Right(m_strHeader, Len(m_strHeader) - lngSplit - 3)
-    m_strHeader = Left(m_strHeader, lngSplit + 3)
+    strChunk = Right$(m_strHeader, Len(m_strHeader) - lngSplit - 3)
+    m_strHeader = Left$(m_strHeader, lngSplit + 3)
     
     'is redirection enabled?
     If m_blnRedirDisabled = False Then
@@ -319,13 +319,13 @@ End Sub
 'ie: 'http://www.yahoo.com/file.txt' => 'www.yahoo.com'
 Private Function GetHostFromURL(ByVal strURL As String) As String
 
-strURL = Trim(strURL)
-If Left(strURL, 7) = "http://" Then strURL = mid(strURL, 8, Len(strURL) - 7)
+strURL = Trim$(strURL)
+If Left$(strURL, 7) = "http://" Then strURL = mid(strURL, 8, Len(strURL) - 7)
 
 Dim Init As Integer
 Init = InStr(1, strURL, "/", vbTextCompare)
 
-If Init <> 0 Then strURL = Left(strURL, Init - 1)
+If Init <> 0 Then strURL = Left$(strURL, Init - 1)
 GetHostFromURL = strURL
 
 End Function
@@ -340,13 +340,13 @@ If m_acAccess = cdNamedProxy Then
     Exit Function
 End If
 
-If Left(strURL, 7) = "http://" Then strURL = Right(strURL, Len(strURL) - 7)
+If Left$(strURL, 7) = "http://" Then strURL = Right$(strURL, Len(strURL) - 7)
 Dim Init As Integer
 Init = InStr(1, strURL, "/", vbTextCompare)
 If Init = 0 Or Init = Null Then
     GetFileFromURL = "/"
 Else
-    GetFileFromURL = Right(strURL, Len(strURL) - Init + 1)
+    GetFileFromURL = Right$(strURL, Len(strURL) - Init + 1)
 End If
 End Function
 
@@ -360,7 +360,7 @@ Position = 1
 Do Until (mid(strPath, Len(strPath) - Position, 1) = "\")
     Position = Position + 1
 Loop
-GetFileFromPath = Right(strPath, Position)
+GetFileFromPath = Right$(strPath, Position)
 End Function
 
 'get variable value from the header
@@ -379,7 +379,7 @@ Init = Init + Len(strVariable) + 1
 last = InStr(Init, strHeader, vbCrLf, vbTextCompare)
 
 
-GetVariableValue = Trim(mid(strHeader, Init, last - Init))
+GetVariableValue = Trim$(mid(strHeader, Init, last - Init))
 
 End Function
 

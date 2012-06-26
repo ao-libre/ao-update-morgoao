@@ -1,7 +1,7 @@
 VERSION 5.00
-Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.ocx"
-Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "RICHTX32.ocx"
-Object = "{248DD890-BB45-11CF-9ABC-0080C7E7B78D}#1.0#0"; "MSWINSCK.ocx"
+Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "mscomctl.ocx"
+Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "RICHTX32.OCX"
+Object = "{248DD890-BB45-11CF-9ABC-0080C7E7B78D}#1.0#0"; "MSWINSCK.OCX"
 Begin VB.Form frmDownload 
    BackColor       =   &H00E0E0E0&
    BorderStyle     =   0  'None
@@ -346,10 +346,10 @@ ElseIf downloadingPatch Then
 Else
     With AoUpdateRemote(DownloadQueue(DownloadQueueIndex - 1))
         'Check if the MD5 matches.
-        If UCase(.MD5) <> UCase(MD5.MD5File(DownloadsPath & .name)) Then
+        If UCase$(.MD5) <> UCase$(MD5.MD5File(DownloadsPath & .name)) Then
             Kill DownloadsPath & .name
             'If we are not downloading the file from the mirror, lets redownload it from there
-            If Not DownloadingFromMirror And General.UPDATES_SITE = General.UPDATE_URL And UPDATE_URL_MIRROR <> vbNullString Then
+            If (Not DownloadingFromMirror) And (General.UPDATES_SITE = General.UPDATE_URL) And (UPDATE_URL_MIRROR <> vbNullString) Then
                 UPDATES_SITE = UPDATE_URL_MIRROR
                 DownloadQueueIndex = DownloadQueueIndex - 1
                 Call NextDownload
@@ -364,11 +364,11 @@ Else
             End If
         End If
         
-        If Dir$(App.Path & "\" & .Path & "\" & .name) <> vbNullString Then
+        If FileExist(App.Path & "\" & .Path & "\" & .name, vbNormal) Then
             Call Kill(App.Path & "\" & .Path & "\" & .name)
         End If
                 
-        If Not FileExist(App.Path & "\" & .Path, vbDirectory) Then MkDir (App.Path & "\" & .Path)
+        If Not FileExist(App.Path & "\" & .Path, vbDirectory) Then Call MkDir(App.Path & "\" & .Path)
             
         Name DownloadsPath & .name As App.Path & "\" & .Path & "\" & .name
         
@@ -397,7 +397,7 @@ Private Sub Download_Error(ByVal Number As Integer, Description As String)
                 Downloading = False
                 Call DownloadConfigFile
             Else
-                If MsgBox("No se ha podido acceder a la web y por lo tanto su cliente puede estar desactualizado" & vbCrLf & "¿Desea correr el cliente de todas formas?", vbYesNo) = vbYes Then
+                If MsgBox("No se ha podido acceder a la web y por lo tanto su cliente puede estar desactualizado" & vbCrLf & "¿Desea correrlo igualmente?", vbYesNo) = vbYes Then
                     Call ShellArgentum
                 Else
                     Download.Cancel
@@ -592,7 +592,7 @@ If downloadingConfig Then
         
         Call DownloadConfigFile
     Else
-        If MsgBox("No se ha podido acceder a la web y por lo tanto su cliente puede estar desactualizado" & vbCrLf & "¿Desea correr el cliente de todas formas?", vbYesNo) = vbYes Then
+        If MsgBox("No se ha podido acceder a la web y por lo tanto su cliente puede estar desactualizado" & vbCrLf & "¿Desea correrlo igualmente?", vbYesNo) = vbYes Then
             Call ShellArgentum
         Else
             Download.Cancel

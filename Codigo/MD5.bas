@@ -123,7 +123,8 @@ Public Function MD5File(ByVal sFile As String) As String
     Open sFile For Binary Access Read As #nF
 
     
-        ReDim bTmp(CHUNK - 1)
+        ReDim bTmp(CHUNK - 1) As Byte
+        
         For i = 1 To lChunks
             Get #nF, , bTmp
             If Not (CryptHashData(hHash, bTmp(0), UBound(bTmp) + 1, 0&) <> 0) Then
@@ -134,9 +135,10 @@ Public Function MD5File(ByVal sFile As String) As String
                 Close #nF
                 Exit Function
             End If
-        Next
+        Next i
+        
         If (lRemainder > 0) Then
-            ReDim bTmp(lRemainder - 1)
+            ReDim bTmp(lRemainder - 1) As Byte
             Get #nF, , bTmp
 
             If Not (CryptHashData(hHash, bTmp(0), UBound(bTmp) + 1, 0&) <> 0) Then
@@ -167,10 +169,6 @@ Public Function MD5File(ByVal sFile As String) As String
     Call CryptReleaseContext(hProvider, 0)
 End Function
 
-Private Function FileExists(sFile As String) As Boolean
-    On Error GoTo Error
-    Call GetAttr(sFile)
-    FileExists = True
-    Exit Function
-Error:
+Private Function FileExists(ByRef sFile As String) As Boolean
+    FileExists = (LenB(Dir$(sFile)) > 0)
 End Function
