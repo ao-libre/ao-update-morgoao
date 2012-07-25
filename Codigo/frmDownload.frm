@@ -1,6 +1,6 @@
 VERSION 5.00
-Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "mscomctl.ocx"
-Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "RICHTX32.OCX"
+Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
+Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "richtx32.ocx"
 Object = "{248DD890-BB45-11CF-9ABC-0080C7E7B78D}#1.0#0"; "MSWINSCK.OCX"
 Begin VB.Form frmDownload 
    BackColor       =   &H00E0E0E0&
@@ -43,7 +43,6 @@ Begin VB.Form frmDownload
       _Version        =   393217
       BackColor       =   12632256
       BorderStyle     =   0
-      Enabled         =   -1  'True
       ReadOnly        =   -1  'True
       ScrollBars      =   2
       Appearance      =   0
@@ -398,6 +397,7 @@ Private Sub Download_Error(ByVal Number As Integer, Description As String)
                 Call DownloadConfigFile
             Else
                 If MsgBox("No se ha podido acceder a la web y por lo tanto su cliente puede estar desactualizado" & vbCrLf & "¿Desea correrlo igualmente?", vbYesNo) = vbYes Then
+                    ClientParams = PARAM_UPDATED & " " & ClientParams
                     Call ShellArgentum
                 Else
                     Download.Cancel
@@ -593,6 +593,7 @@ If downloadingConfig Then
         Call DownloadConfigFile
     Else
         If MsgBox("No se ha podido acceder a la web y por lo tanto su cliente puede estar desactualizado" & vbCrLf & "¿Desea correrlo igualmente?", vbYesNo) = vbYes Then
+            ClientParams = PARAM_UPDATED & " " & ClientParams
             Call ShellArgentum
         Else
             Download.Cancel
